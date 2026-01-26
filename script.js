@@ -36,6 +36,10 @@ async function fetchMetar() {
     resultSection.style.display = 'block';
     
     try {
+        if (window.location && window.location.protocol === 'file:') {
+            throw new Error('Live fetching is blocked when opening this page directly from your disk (file://). Run it via a local web server (e.g., VS Code Live Server) or use the deployed GitHub Pages site, then try again.');
+        }
+
         // Try multiple METAR data sources
         let metarData = null;
         let lastError = null;
@@ -43,9 +47,10 @@ async function fetchMetar() {
         // Encode the ICAO code to prevent URL injection
         const encodedIcao = encodeURIComponent(icaoCode);
         
-        // Try NOAA Aviation Weather Text Data Server (often CORS-friendly)
+        // Primary source: VATSIM METAR endpoint (CORS-friendly for browser apps)
+        // Example: https://metar.vatsim.net/EGCC
         try {
-            const url = `https://aviationweather.gov/cgi-bin/data/metar.php?ids=${encodedIcao}`;
+            const url = `https://metar.vatsim.net/${encodedIcao}`;
             const response = await fetch(url);
             if (response.ok) {
                 metarData = await response.text();
@@ -53,21 +58,14 @@ async function fetchMetar() {
         } catch (e) {
             lastError = e;
         }
-        
-        // If first method fails, try alternative endpoint
+
+        // Fallback: alternate VATSIM URL format
         if (!metarData || metarData.trim() === '') {
             try {
-                const url = `https://aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${encodedIcao}&hoursBeforeNow=2`;
+                const url = `https://metar.vatsim.net/metar.php?id=${encodedIcao}`;
                 const response = await fetch(url);
                 if (response.ok) {
-                    const xmlText = await response.text();
-                    // Use DOMParser to safely parse XML
-                    const parser = new DOMParser();
-                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-                    const rawTextElement = xmlDoc.querySelector('raw_text');
-                    if (rawTextElement) {
-                        metarData = rawTextElement.textContent;
-                    }
+                    metarData = await response.text();
                 }
             } catch (e) {
                 lastError = e;
@@ -76,7 +74,10 @@ async function fetchMetar() {
         
         // Check if METAR data was successfully retrieved
         if (!metarData || metarData.trim() === '' || metarData.includes('No METAR found')) {
-            throw new Error(`Unable to fetch METAR data for ${icaoCode}. This may be due to:\n- Invalid airport code\n- No recent weather reports available\n- Network or CORS restrictions\n\nYou can manually enter the METAR code below if you have it.`);
+            const extraDetail = lastError ? `\n\nLast error: ${lastError.message || String(lastError)}` : '';
+            throw new Error(
+                `Unable to fetch METAR data for ${icaoCode}. This may be due to:\n- Invalid airport code\n- No recent weather reports available\n- Network restrictions or temporary endpoint issues\n\nYou can manually enter the METAR code below if you have it.` + extraDetail
+            );
         }
         
         // Populate the manual input field with fetched data
@@ -160,27 +161,74 @@ async function fetchAtis() {
     atisResultSection.style.display = 'block';
     
     try {
-        // Encode the ICAO code to prevent URL injection
-        const encodedIcao = encodeURIComponent(icaoCode);
-        
-        // Fetch ATIS data from VATSIM API
-        const url = `https://web.tombnetwork.ca/atis.php?icao=${encodedIcao}`;
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
+        if (window.location && window.location.protocol === 'file:') {
+            throw new Error('Live fetching is blocked when opening this page directly from your disk (file://). Run it via a local web server (e.g., VS Code Live Server) or use the deployed GitHub Pages site, then try again.');
         }
-        
-        const atisData = await response.text();
-        
-        // Check if ATIS data was returned
-        const atisLower = atisData.toLowerCase();
-        if (!atisData || atisData.trim() === '' || atisLower.includes('no atis') || atisLower.includes('error')) {
-            throw new Error(`No VATSIM ATIS found for ${icaoCode}. This airport may not have active ATC on VATSIM at the moment.`);
+
+        // Fetch ATIS from the official VATSIM public data feed (browser/CORS-friendly)
+        const vatsimDataUrls = [
+            'https://data.vatsim.net/v3/vatsim-data.json',
+            'https://cdn.vatsim.net/vatsim-data.json'
+        ];
+
+        let vatsimData = null;
+        let lastError = null;
+
+        for (const url of vatsimDataUrls) {
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`VATSIM feed request failed with status ${response.status}`);
+                }
+                vatsimData = await response.json();
+                break;
+            } catch (e) {
+                lastError = e;
+            }
         }
-        
+
+        if (!vatsimData || !Array.isArray(vatsimData.atis)) {
+            const extraDetail = lastError ? ` Last error: ${lastError.message || String(lastError)}` : '';
+            throw new Error(`Unable to load VATSIM data feed.${extraDetail}`);
+        }
+
+        const upperIcao = icaoCode.toUpperCase();
+        const prefix = `${upperIcao}_`;
+
+        const matches = vatsimData.atis
+            .filter((a) => typeof a?.callsign === 'string')
+            .filter((a) => a.callsign.toUpperCase().startsWith(prefix));
+
+        if (matches.length === 0) {
+            throw new Error(`No VATSIM ATIS found for ${icaoCode}. This airport may not have active ATC/ATIS on VATSIM at the moment.`);
+        }
+
+        // Prefer the "{ICAO}_ATIS" callsign when present, otherwise choose the most detailed entry.
+        const preferred = matches
+            .slice()
+            .sort((a, b) => {
+                const aCallsign = a.callsign.toUpperCase();
+                const bCallsign = b.callsign.toUpperCase();
+                const aExact = aCallsign === `${upperIcao}_ATIS` ? 1 : 0;
+                const bExact = bCallsign === `${upperIcao}_ATIS` ? 1 : 0;
+                if (aExact !== bExact) return bExact - aExact;
+
+                const aText = Array.isArray(a.text_atis) ? a.text_atis.join(' ') : (a.text_atis || '');
+                const bText = Array.isArray(b.text_atis) ? b.text_atis.join(' ') : (b.text_atis || '');
+                return (bText.length || 0) - (aText.length || 0);
+            })[0];
+
+        const atisLines = Array.isArray(preferred.text_atis)
+            ? preferred.text_atis.filter(Boolean)
+            : [preferred.text_atis].filter(Boolean);
+
+        const atisText = atisLines.join(' ').trim();
+        if (!atisText) {
+            throw new Error(`VATSIM ATIS was found for ${icaoCode} but contained no text.`);
+        }
+
         // Decode and display the ATIS
-        displayAtisResults(atisData, icaoCode);
+        displayAtisResults(atisText, icaoCode);
         atisResultSection.style.display = 'block';
         
     } catch (error) {
@@ -194,7 +242,10 @@ async function fetchAtis() {
         errorDiv.appendChild(document.createElement('br'));
         errorDiv.appendChild(document.createElement('br'));
         
-        const errorMessage = error.message || 'Failed to fetch ATIS data';
+        let errorMessage = error.message || 'Failed to fetch ATIS data';
+        if (errorMessage === 'Failed to fetch') {
+            errorMessage = 'Failed to fetch ATIS data (network/CORS blocked). Try again, or verify you are online.';
+        }
         errorDiv.appendChild(document.createTextNode(errorMessage));
         errorDiv.appendChild(document.createElement('br'));
         errorDiv.appendChild(document.createElement('br'));

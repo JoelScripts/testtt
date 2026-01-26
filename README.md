@@ -9,7 +9,7 @@ Visit the live website: **https://joelscripts.github.io/testtt/**
 ## Features
 
 - **🆕 Automatic METAR Fetching**: Enter any airport ICAO code (e.g., KJFK, EGLL, KSFO) to automatically fetch and decode current weather data
-- **✈️ VATSIM ATIS Decoder**: Fetch and decode live ATIS from VATSIM network airports with active ATC
+- **✈️ VATSIM ATIS Decoder**: Fetch and decode live ATIS from VATSIM network airports with active ATC (via the official VATSIM data feed)
 - **Input Validation**: Built-in validation ensures only valid 4-letter ICAO codes are submitted
 - **Easy-to-use interface**: Simply paste a METAR code and get instant human-readable translations
 - **Comprehensive decoding**: Decodes all major METAR components including:
@@ -32,7 +32,9 @@ Visit the live website: **https://joelscripts.github.io/testtt/**
 Visit https://joelscripts.github.io/testtt/ to use the decoder immediately.
 
 ### Locally
-1. Open `index.html` in a web browser
+1. Run a local web server (recommended), then open the site in your browser
+   - VS Code: use the "Live Server" extension
+   - Or: `python -m http.server` and open `http://localhost:8000/`
 2. **Option 1 - Fetch Current METAR:**
    - Enter a 4-letter ICAO airport code (e.g., KJFK, EGLL, KSFO)
    - Press Enter or click "Fetch Current METAR"
@@ -47,7 +49,7 @@ Visit https://joelscripts.github.io/testtt/ to use the decoder immediately.
 5. The decoded information will display with clear icons and explanations
 
 ### Note on API Access
-The automatic METAR fetching feature uses the NOAA Aviation Weather service. The VATSIM ATIS feature uses the VATSIM network API. Due to browser CORS restrictions, these APIs may not be accessible from all locations. If automatic fetching doesn't work, you can still use the manual input method to decode METAR codes.
+The automatic METAR fetching feature uses the public VATSIM METAR endpoint (CORS-friendly for browser apps like GitHub Pages). If automatic fetching doesn't work, you can still use the manual input method to decode METAR codes.
 
 ## Example METAR Codes
 
