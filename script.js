@@ -16,7 +16,11 @@ async function fetchMetar() {
     }
     
     if (!validateIcaoCode(icaoCode)) {
-        output.innerHTML = '<div class="error">Invalid ICAO code. Please enter a 4-letter airport code (e.g., KJFK, EGLL, KSFO).</div>';
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        errorDiv.textContent = 'Invalid ICAO code. Please enter a 4-character airport code (e.g., KJFK, EGLL, KSFO).';
+        output.innerHTML = '';
+        output.appendChild(errorDiv);
         resultSection.style.display = 'block';
         return;
     }
@@ -24,7 +28,11 @@ async function fetchMetar() {
     // Show loading state
     fetchBtn.disabled = true;
     fetchBtn.textContent = 'Fetching...';
-    output.innerHTML = '<div class="loading">⏳ Fetching METAR data for ' + icaoCode + '...</div>';
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading';
+    loadingDiv.textContent = `⏳ Fetching METAR data for ${icaoCode}...`;
+    output.innerHTML = '';
+    output.appendChild(loadingDiv);
     resultSection.style.display = 'block';
     
     try {
@@ -32,9 +40,12 @@ async function fetchMetar() {
         let metarData = null;
         let lastError = null;
         
+        // Encode the ICAO code to prevent URL injection
+        const encodedIcao = encodeURIComponent(icaoCode);
+        
         // Try NOAA Aviation Weather Text Data Server (often CORS-friendly)
         try {
-            const url = `https://aviationweather.gov/cgi-bin/data/metar.php?ids=${icaoCode}`;
+            const url = `https://aviationweather.gov/cgi-bin/data/metar.php?ids=${encodedIcao}`;
             const response = await fetch(url);
             if (response.ok) {
                 metarData = await response.text();
@@ -46,14 +57,16 @@ async function fetchMetar() {
         // If first method fails, try alternative endpoint
         if (!metarData || metarData.trim() === '') {
             try {
-                const url = `https://aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${icaoCode}&hoursBeforeNow=2`;
+                const url = `https://aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${encodedIcao}&hoursBeforeNow=2`;
                 const response = await fetch(url);
                 if (response.ok) {
                     const xmlText = await response.text();
-                    // Extract raw_text from XML
-                    const match = xmlText.match(/<raw_text>(.*?)<\/raw_text>/);
-                    if (match) {
-                        metarData = match[1];
+                    // Use DOMParser to safely parse XML
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                    const rawTextElement = xmlDoc.querySelector('raw_text');
+                    if (rawTextElement) {
+                        metarData = rawTextElement.textContent;
                     }
                 }
             } catch (e) {
@@ -76,12 +89,29 @@ async function fetchMetar() {
         
     } catch (error) {
         console.error('Error fetching METAR:', error);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        
+        const title = document.createElement('strong');
+        title.textContent = '⚠️ Error fetching METAR data:';
+        errorDiv.appendChild(title);
+        errorDiv.appendChild(document.createElement('br'));
+        
         const errorMessage = error.message || 'Failed to fetch METAR data';
-        output.innerHTML = `<div class="error">
-            <strong>⚠️ Error fetching METAR data:</strong><br>
-            ${errorMessage.replace(/\n/g, '<br>')}<br><br>
-            <em>Alternative: Use the manual input section below to decode METAR codes.</em>
-        </div>`;
+        const lines = errorMessage.split('\n');
+        lines.forEach((line, index) => {
+            if (index > 0) errorDiv.appendChild(document.createElement('br'));
+            errorDiv.appendChild(document.createTextNode(line));
+        });
+        errorDiv.appendChild(document.createElement('br'));
+        errorDiv.appendChild(document.createElement('br'));
+        
+        const tip = document.createElement('em');
+        tip.textContent = 'Alternative: Use the manual input section below to decode METAR codes.';
+        errorDiv.appendChild(tip);
+        
+        output.innerHTML = '';
+        output.appendChild(errorDiv);
         resultSection.style.display = 'block';
     } finally {
         // Reset button state
@@ -92,8 +122,8 @@ async function fetchMetar() {
 
 // Validate ICAO code format
 function validateIcaoCode(code) {
-    // ICAO codes are exactly 4 letters
-    const icaoPattern = /^[A-Z]{4}$/;
+    // ICAO codes are exactly 4 alphanumeric characters (letters or numbers)
+    const icaoPattern = /^[A-Z0-9]{4}$/;
     return icaoPattern.test(code);
 }
 
@@ -103,7 +133,11 @@ function decodeMetar() {
     const output = document.getElementById('decoded-output');
     
     if (!input) {
-        output.innerHTML = '<div class="error">Please enter a METAR code to decode.</div>';
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        errorDiv.textContent = 'Please enter a METAR code to decode.';
+        output.innerHTML = '';
+        output.appendChild(errorDiv);
         resultSection.style.display = 'block';
         return;
     }
