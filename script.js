@@ -52,12 +52,17 @@ function parseMetar(metar) {
     }
     
     // Wind
-    if (parts[i] && parts[i].match(/^\d{5}(G\d{2,3})?(KT|MPS|KMH)$/)) {
+    if (parts[i] && parts[i].match(/^\d{3}\d{2,3}(G\d{2,3})?(KT|MPS|KMH)$/)) {
         decoded.wind = decodeWind(parts[i]);
         i++;
     } else if (parts[i] && parts[i] === 'VRB') {
         if (parts[i+1] && parts[i+1].match(/^\d{2,3}(KT|MPS|KMH)$/)) {
-            decoded.wind = 'Variable wind at ' + parts[i+1].replace(/[A-Z]+$/, '') + ' knots';
+            const unitMatch = parts[i+1].match(/(KT|MPS|KMH)$/);
+            const unit = unitMatch ? unitMatch[1] : 'KT';
+            let unitText = 'knots';
+            if (unit === 'MPS') unitText = 'meters per second';
+            if (unit === 'KMH') unitText = 'kilometers per hour';
+            decoded.wind = 'Variable wind at ' + parts[i+1].replace(/[A-Z]+$/, '') + ' ' + unitText;
             i += 2;
         }
     }
