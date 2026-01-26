@@ -28,19 +28,42 @@ async function fetchMetar() {
     resultSection.style.display = 'block';
     
     try {
-        // Use NOAA Aviation Weather API
-        const url = `https://aviationweather.gov/api/data/metar?ids=${icaoCode}&format=raw`;
-        const response = await fetch(url);
+        // Try multiple METAR data sources
+        let metarData = null;
+        let lastError = null;
         
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
+        // Try NOAA Aviation Weather Text Data Server (often CORS-friendly)
+        try {
+            const url = `https://aviationweather.gov/cgi-bin/data/metar.php?ids=${icaoCode}`;
+            const response = await fetch(url);
+            if (response.ok) {
+                metarData = await response.text();
+            }
+        } catch (e) {
+            lastError = e;
         }
         
-        const metarData = await response.text();
+        // If first method fails, try alternative endpoint
+        if (!metarData || metarData.trim() === '') {
+            try {
+                const url = `https://aviationweather.gov/adds/dataserver_current/httpparam?dataSource=metars&requestType=retrieve&format=xml&stationString=${icaoCode}&hoursBeforeNow=2`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    const xmlText = await response.text();
+                    // Extract raw_text from XML
+                    const match = xmlText.match(/<raw_text>(.*?)<\/raw_text>/);
+                    if (match) {
+                        metarData = match[1];
+                    }
+                }
+            } catch (e) {
+                lastError = e;
+            }
+        }
         
-        // Check if METAR data was returned
+        // Check if METAR data was successfully retrieved
         if (!metarData || metarData.trim() === '' || metarData.includes('No METAR found')) {
-            throw new Error(`No METAR data found for airport code ${icaoCode}. Please check the code and try again.`);
+            throw new Error(`Unable to fetch METAR data for ${icaoCode}. This may be due to:\n- Invalid airport code\n- No recent weather reports available\n- Network or CORS restrictions\n\nYou can manually enter the METAR code below if you have it.`);
         }
         
         // Populate the manual input field with fetched data
@@ -53,10 +76,11 @@ async function fetchMetar() {
         
     } catch (error) {
         console.error('Error fetching METAR:', error);
+        const errorMessage = error.message || 'Failed to fetch METAR data';
         output.innerHTML = `<div class="error">
-            <strong>Error fetching METAR data:</strong><br>
-            ${error.message}<br><br>
-            <em>Tip: Make sure you entered a valid 4-letter ICAO airport code.</em>
+            <strong>⚠️ Error fetching METAR data:</strong><br>
+            ${errorMessage.replace(/\n/g, '<br>')}<br><br>
+            <em>Alternative: Use the manual input section below to decode METAR codes.</em>
         </div>`;
         resultSection.style.display = 'block';
     } finally {

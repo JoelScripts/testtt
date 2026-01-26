@@ -8,6 +8,8 @@ Visit the live website: **https://joelscripts.github.io/testtt/**
 
 ## Features
 
+- **🆕 Automatic METAR Fetching**: Enter any airport ICAO code (e.g., KJFK, EGLL, KSFO) to automatically fetch and decode current weather data
+- **Input Validation**: Built-in validation ensures only valid 4-letter ICAO codes are submitted
 - **Easy-to-use interface**: Simply paste a METAR code and get instant human-readable translations
 - **Comprehensive decoding**: Decodes all major METAR components including:
   - Airport station identifier
@@ -20,6 +22,7 @@ Visit the live website: **https://joelscripts.github.io/testtt/**
   - Altimeter settings
 - **Quick examples**: Pre-loaded examples for major airports (JFK, London Heathrow, San Francisco)
 - **Responsive design**: Works on desktop, tablet, and mobile devices
+- **Error handling**: Clear error messages for invalid codes or API failures
 - **No dependencies**: Pure HTML, CSS, and JavaScript - no frameworks needed
 
 ## How to Use
@@ -29,9 +32,17 @@ Visit https://joelscripts.github.io/testtt/ to use the decoder immediately.
 
 ### Locally
 1. Open `index.html` in a web browser
-2. Enter a METAR code in the text area, or click one of the example buttons
-3. Click "Decode METAR" to see the human-readable translation
+2. **Option 1 - Fetch Current METAR:**
+   - Enter a 4-letter ICAO airport code (e.g., KJFK, EGLL, KSFO)
+   - Press Enter or click "Fetch Current METAR"
+   - The current METAR data will be fetched and automatically decoded
+3. **Option 2 - Manual Input:**
+   - Enter a METAR code in the text area, or click one of the example buttons
+   - Click "Decode METAR" to see the human-readable translation
 4. The decoded information will display with clear icons and explanations
+
+### Note on API Access
+The automatic METAR fetching feature uses the NOAA Aviation Weather service. Due to browser CORS restrictions, the API may not be accessible from all locations. If automatic fetching doesn't work, you can still use the manual input method to decode METAR codes.
 
 ## Example METAR Codes
 
