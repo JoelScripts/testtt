@@ -174,7 +174,8 @@ async function fetchAtis() {
         const atisData = await response.text();
         
         // Check if ATIS data was returned
-        if (!atisData || atisData.trim() === '' || atisData.toLowerCase().includes('no atis') || atisData.toLowerCase().includes('error')) {
+        const atisLower = atisData.toLowerCase();
+        if (!atisData || atisData.trim() === '' || atisLower.includes('no atis') || atisLower.includes('error')) {
             throw new Error(`No VATSIM ATIS found for ${icaoCode}. This airport may not have active ATC on VATSIM at the moment.`);
         }
         
@@ -261,8 +262,15 @@ function decodeAtis(atisText, icaoCode) {
         '📝 Remarks': ''
     };
     
+    // NATO phonetic alphabet for information letter matching
+    const natoPhonetic = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'GOLF', 'HOTEL', 
+                          'INDIA', 'JULIET', 'KILO', 'LIMA', 'MIKE', 'NOVEMBER', 'OSCAR', 'PAPA', 
+                          'QUEBEC', 'ROMEO', 'SIERRA', 'TANGO', 'UNIFORM', 'VICTOR', 'WHISKEY', 
+                          'XRAY', 'YANKEE', 'ZULU'];
+    
     // Extract information letter (e.g., "INFORMATION A", "ATIS BRAVO")
-    const infoMatch = atisText.match(/(?:INFORMATION|ATIS)\s+([A-Z]|ALPHA|BRAVO|CHARLIE|DELTA|ECHO|FOXTROT|GOLF|HOTEL|INDIA|JULIET|KILO|LIMA|MIKE|NOVEMBER|OSCAR|PAPA|QUEBEC|ROMEO|SIERRA|TANGO|UNIFORM|VICTOR|WHISKEY|XRAY|YANKEE|ZULU)/i);
+    const infoPattern = new RegExp(`(?:INFORMATION|ATIS)\\s+([A-Z]|${natoPhonetic.join('|')})`, 'i');
+    const infoMatch = atisText.match(infoPattern);
     if (infoMatch) {
         decoded['📻 Information'] = `Information ${infoMatch[1].toUpperCase()}`;
     }
@@ -276,8 +284,11 @@ function decodeAtis(atisText, icaoCode) {
         decoded['🕐 Time'] = `${hour}:${minute} UTC`;
     }
     
-    // Extract runway information
-    const runwayMatch = atisText.match(/(?:RUNWAY|LANDING|DEPARTING|EXPECT|RUNWAYS?)\s+(?:RUNWAY\s+)?([0-9]{1,2}[LRC]?(?:\s+(?:AND|&|,)\s+[0-9]{1,2}[LRC]?)*)/i);
+    // Extract runway information - match common patterns
+    const runwayKeywords = /(?:RUNWAY|LANDING|DEPARTING|EXPECT|RUNWAYS?)\s+(?:RUNWAY\s+)?/i;
+    const runwayNumbers = /([0-9]{1,2}[LRC]?(?:\s+(?:AND|&|,)\s+[0-9]{1,2}[LRC]?)*)/i;
+    const runwayPattern = new RegExp(runwayKeywords.source + runwayNumbers.source, 'i');
+    const runwayMatch = atisText.match(runwayPattern);
     if (runwayMatch) {
         decoded['🛬 Runway(s)'] = `Runway ${runwayMatch[1]}`;
     }
@@ -308,19 +319,21 @@ function decodeAtis(atisText, icaoCode) {
     }
     
     // Extract temperature
-    const tempMatch = atisText.match(/TEMPERATURE\s+(?:MINUS\s+)?(\d{1,2})/i);
+    const tempPattern = /TEMPERATURE\s+((?:MINUS\s+)?)(\d{1,2})/i;
+    const tempMatch = atisText.match(tempPattern);
     if (tempMatch) {
-        const isMinus = atisText.match(/TEMPERATURE\s+MINUS/i);
-        const tempC = isMinus ? -parseInt(tempMatch[1]) : parseInt(tempMatch[1]);
+        const isMinus = tempMatch[1].trim() !== '';
+        const tempC = isMinus ? -parseInt(tempMatch[2]) : parseInt(tempMatch[2]);
         const tempF = Math.round((tempC * 9/5) + 32);
         decoded['🌡️ Temperature'] = `${tempC}°C (${tempF}°F)`;
     }
     
     // Extract dewpoint
-    const dewMatch = atisText.match(/(?:DEWPOINT|DEW\s+POINT)\s+(?:MINUS\s+)?(\d{1,2})/i);
+    const dewPattern = /(?:DEWPOINT|DEW\s+POINT)\s+((?:MINUS\s+)?)(\d{1,2})/i;
+    const dewMatch = atisText.match(dewPattern);
     if (dewMatch) {
-        const isMinus = atisText.match(/(?:DEWPOINT|DEW\s+POINT)\s+MINUS/i);
-        const dewC = isMinus ? -parseInt(dewMatch[1]) : parseInt(dewMatch[1]);
+        const isMinus = dewMatch[1].trim() !== '';
+        const dewC = isMinus ? -parseInt(dewMatch[2]) : parseInt(dewMatch[2]);
         const dewF = Math.round((dewC * 9/5) + 32);
         decoded['🌡️ Dewpoint'] = `${dewC}°C (${dewF}°F)`;
     }
@@ -337,7 +350,8 @@ function decodeAtis(atisText, icaoCode) {
     }
     
     // Extract sky condition
-    if (atisText.match(/(?:SKY|CEILING)\s+CLEAR/i) || atisText.match(/\bCLEAR\b/i)) {
+    const clearSkyPattern = /(?:SKY|CEILING)\s+CLEAR|\bCLEAR\b/i;
+    if (atisText.match(clearSkyPattern)) {
         decoded['☁️ Sky Condition'] = 'Clear skies';
     } else {
         const skyMatch = atisText.match(/(?:FEW|SCATTERED|BROKEN|OVERCAST)(?:\s+(?:AT\s+)?(\d+))?/i);
@@ -346,8 +360,9 @@ function decodeAtis(atisText, icaoCode) {
         }
     }
     
-    // Extract remarks/additional info
-    const remarksMatch = atisText.match(/(?:REMARKS|ADVISE|NOTICE|NOTAM)[\s:]+(.+?)(?=\.|$)/i);
+    // Extract remarks/additional info - match until end of string or uppercase word pattern
+    const remarksPattern = /(?:REMARKS|ADVISE|NOTICE|NOTAM)[\s:]+(.+)/i;
+    const remarksMatch = atisText.match(remarksPattern);
     if (remarksMatch) {
         decoded['📝 Remarks'] = remarksMatch[1].trim();
     }
