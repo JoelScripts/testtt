@@ -60,12 +60,17 @@
             <div class="examples">
 
                             <div class="pilotprep-card">
-                                <div class="pilotprep-section-title">Runway Landing Suggestion</div>
-                                <div class="tool-section">
-                                    <p>Suggests the best runway for landing based on current winds and weather.</p>
-                                    <input id="runway-icao" type="text" maxlength="4" placeholder="Airport ICAO (e.g., EGLL)" />
-                                    <button class="primary-btn" type="button" onclick="suggestLandingRunway()">Suggest Runway</button>
-                                    <div id="runway-suggestion-output"></div>
+                                <div class="pilotprep-section-title" style="display:flex;align-items:center;gap:10px;">
+                                    <span style="font-size:1.5em;color:#7c3aed;">🛬</span>
+                                    Runway Landing Suggestion
+                                </div>
+                                <div class="tool-section" style="background:#f7f6fd;padding:18px 14px 18px 14px;border-radius:12px;box-shadow:0 1px 4px rgba(124,58,237,0.06);">
+                                    <p style="margin-bottom:12px;font-size:1.08em;color:#5a4b81;">Suggests the best runway for landing based on current winds and weather.</p>
+                                    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+                                        <input id="runway-icao" type="text" maxlength="4" placeholder="Airport ICAO (e.g., EGLL)" style="flex:1;max-width:220px;" />
+                                        <button class="primary-btn" type="button" onclick="suggestLandingRunway()">Suggest Runway</button>
+                                    </div>
+                                    <div id="runway-suggestion-output" style="margin-top:10px;padding:12px 14px;background:#fff;border-radius:8px;min-height:38px;box-shadow:0 1px 2px rgba(124,58,237,0.04);"></div>
                                 </div>
                             </div>
                 <p><strong>Quick Examples:</strong></p>

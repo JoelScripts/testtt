@@ -1053,7 +1053,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // --- Runway Landing Suggestion ---
-window.suggestLandingRunway = function suggestLandingRunway() {
+window.suggestLandingRunway = async function suggestLandingRunway() {
     const icao = (document.getElementById('runway-icao')?.value || '').trim().toUpperCase();
     const output = document.getElementById('runway-suggestion-output');
     output.innerHTML = '';
@@ -1077,32 +1077,54 @@ window.suggestLandingRunway = function suggestLandingRunway() {
     }
     let windDir = windMatch[1] === 'VRB' ? null : parseInt(windMatch[1]);
     let windSpd = parseInt(windMatch[2]);
-    // Real CYVR runways with headings
-    const runways = [
-        { id: '08L', heading: 81 },
-        { id: '26R', heading: 261 },
-        { id: '08R', heading: 84 },
-        { id: '26L', heading: 264 },
-        { id: '13', heading: 134 },
-        { id: '31', heading: 314 }
-    ];
-    let bestRunway = null;
-    let bestHeadwind = -Infinity;
-    let details = '';
-    runways.forEach(rwy => {
-        let headwind = 0;
-        if (windDir !== null) {
-            let angle = Math.abs(windDir - rwy.heading);
-            if (angle > 180) angle = 360 - angle;
-            headwind = Math.round(windSpd * Math.cos(angle * Math.PI / 180));
-        } else {
-            headwind = 0; // VRB wind, can't calculate
+    // Fetch runways from OurAirports API (CSV)
+    output.textContent = 'Fetching runway data...';
+    try {
+        const resp = await fetch('https://ourairports.com/data/runways.csv');
+        const csv = await resp.text();
+        const lines = csv.split(/\r?\n/);
+        const headers = lines[0].split(',');
+        const identIdx = headers.indexOf('airport_ident');
+        const leHeadingIdx = headers.indexOf('le_heading_degT');
+        const leIdentIdx = headers.indexOf('le_ident');
+        const heHeadingIdx = headers.indexOf('he_heading_degT');
+        const heIdentIdx = headers.indexOf('he_ident');
+        const runways = [];
+        for (let i = 1; i < lines.length; i++) {
+            const row = lines[i].split(',');
+            if (row[identIdx] === icao) {
+                if (row[leIdentIdx] && row[leHeadingIdx]) {
+                    runways.push({ id: row[leIdentIdx].replace(/"/g, ''), heading: parseInt(row[leHeadingIdx]) });
+                }
+                if (row[heIdentIdx] && row[heHeadingIdx]) {
+                    runways.push({ id: row[heIdentIdx].replace(/"/g, ''), heading: parseInt(row[heHeadingIdx]) });
+                }
+            }
         }
-        details += `Runway ${rwy.id}: headwind ${headwind}kt<br>`;
-        if (headwind > bestHeadwind) {
-            bestHeadwind = headwind;
-            bestRunway = rwy.id;
+        if (!runways.length) {
+            output.textContent = 'No runway data found for this airport.';
+            return;
         }
-    });
-    output.innerHTML = `<strong>Suggested Runway:</strong> ${bestRunway}<br><small>${details}</small>`;
+        let bestRunway = null;
+        let bestHeadwind = -Infinity;
+        let details = '';
+        runways.forEach(rwy => {
+            let headwind = 0;
+            if (windDir !== null) {
+                let angle = Math.abs(windDir - rwy.heading);
+                if (angle > 180) angle = 360 - angle;
+                headwind = Math.round(windSpd * Math.cos(angle * Math.PI / 180));
+            } else {
+                headwind = 0; // VRB wind, can't calculate
+            }
+            details += `Runway ${rwy.id}: headwind ${headwind}kt<br>`;
+            if (headwind > bestHeadwind) {
+                bestHeadwind = headwind;
+                bestRunway = rwy.id;
+            }
+        });
+        output.innerHTML = `<strong>Suggested Runway:</strong> ${bestRunway}<br><small>${details}</small>`;
+    } catch (e) {
+        output.textContent = 'Failed to fetch runway data.';
+    }
 };

@@ -1,3 +1,39 @@
+/* Runway Landing Suggestion Card Custom Styles */
+.runway-suggestion-card .pilotprep-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.18em;
+    color: #7c3aed;
+}
+.runway-suggestion-card .tool-section {
+    background: #f7f6fd;
+    padding: 18px 14px 18px 14px;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(124,58,237,0.06);
+}
+.runway-suggestion-card .tool-section p {
+    margin-bottom: 12px;
+    font-size: 1.08em;
+    color: #5a4b81;
+}
+.runway-suggestion-card .tool-section input[type="text"] {
+    flex: 1;
+    max-width: 220px;
+}
+.runway-suggestion-card .tool-section button {
+    min-width: 120px;
+}
+.runway-suggestion-card #runway-suggestion-output {
+    margin-top: 10px;
+    padding: 12px 14px;
+    background: #fff;
+    border-radius: 8px;
+    min-height: 38px;
+    box-shadow: 0 1px 2px rgba(124,58,237,0.04);
+    font-size: 1.05em;
+    color: #2d225a;
+}
 @media (max-width: 700px) {
     .pilotprep-main {
         grid-template-columns: 1fr;
