@@ -57,7 +57,9 @@ Use the navigation dropdown in the header to switch to the NOTAMs page.
 
 ### Notes on NOTAM Fetching
 NOTAM providers often require API keys or block cross-origin requests from browser apps.
-If fetching fails in your browser, use the manual paste box to decode NOTAM text.
+
+- This site uses **AVWX** for live NOTAM fetching (requires an AVWX API token).
+- If you don’t have a token (or fetching fails), use the manual paste box to decode NOTAM text.
 
 ### Note on API Access
 The automatic METAR fetching feature uses the public VATSIM METAR endpoint (CORS-friendly for browser apps like GitHub Pages). If automatic fetching doesn't work, you can still use the manual input method to decode METAR codes.

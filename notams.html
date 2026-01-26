@@ -38,6 +38,29 @@
                     />
                     <button id="fetch-notams-btn" onclick="fetchNotams()">Fetch NOTAMs</button>
                 </div>
+                <div class="notam-settings">
+                    <details class="settings-details">
+                        <summary>Fetching settings</summary>
+                        <div class="settings-grid">
+                            <div class="settings-field">
+                                <label for="notam-source">Source</label>
+                                <select id="notam-source" class="settings-select">
+                                    <option value="avwx" selected>AVWX (requires token)</option>
+                                </select>
+                            </div>
+                            <div class="settings-field">
+                                <label for="avwx-token">AVWX API Token</label>
+                                <input
+                                    type="password"
+                                    id="avwx-token"
+                                    placeholder="Paste your AVWX token"
+                                    autocomplete="off"
+                                />
+                                <p class="input-hint" style="margin-top:6px;">Stored locally in your browser (localStorage). Not shared unless you fetch.</p>
+                            </div>
+                        </div>
+                    </details>
+                </div>
                 <p class="input-hint">If fetching fails (API/CORS), paste NOTAMs manually below and decode.</p>
             </div>
 

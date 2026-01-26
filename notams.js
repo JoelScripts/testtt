@@ -40,6 +40,13 @@ async function fetchNotams() {
             throw new Error('Live fetching is blocked when opening this page directly from your disk (file://). Run it via a local web server (e.g., VS Code Live Server) or use the deployed GitHub Pages site, then try again.');
         }
 
+        // Persist token locally (optional)
+        const tokenInput = document.getElementById('avwx-token');
+        const token = (tokenInput?.value || '').trim();
+        if (token) {
+            try { localStorage.setItem('avwxToken', token); } catch (_) {}
+        }
+
         const raw = await fetchNotamsFromAnySource(icaoCode);
         if (!raw || raw.trim() === '') {
             throw new Error(`No NOTAMs found for ${icaoCode}, or the data source returned empty.`);
@@ -66,38 +73,45 @@ async function fetchNotams() {
 async function fetchNotamsFromAnySource(icaoCode) {
     const encoded = encodeURIComponent(icaoCode);
 
-    // Try a couple of public endpoints. Availability/CORS can vary by browser/region.
-    const sources = [
-        {
-            name: 'aviationapi',
-            url: `https://api.aviationapi.com/v1/notams?apt=${encoded}`,
-            parse: async (resp) => {
-                const data = await resp.json();
-                // Common response: { "KJFK": ["...", "..."], "status": ... }
-                const direct = data?.[icaoCode] || data?.[icaoCode.toUpperCase()];
-                if (Array.isArray(direct)) return direct.join('\n\n');
-                if (typeof direct === 'string') return direct;
-
-                // Some variants return { notams: [...] }
-                if (Array.isArray(data?.notams)) return data.notams.join('\n\n');
-                return '';
-            }
-        }
-    ];
-
-    let lastErr = null;
-    for (const s of sources) {
-        try {
-            const r = await fetch(s.url, { cache: 'no-store' });
-            if (!r.ok) throw new Error(`${s.name} responded ${r.status}`);
-            const txt = await s.parse(r);
-            if (txt && txt.trim()) return txt;
-        } catch (e) {
-            lastErr = e;
-        }
+    const source = (document.getElementById('notam-source')?.value || 'avwx').toLowerCase();
+    if (source !== 'avwx') {
+        throw new Error('Unsupported NOTAM source selected.');
     }
 
-    throw new Error(`Unable to fetch NOTAMs for ${icaoCode}. ${lastErr ? `Last error: ${lastErr.message || String(lastErr)}` : ''}`.trim());
+    // AVWX supports NOTAM-by-ICAO but requires a token.
+    // Note: tokens in client-side apps are visible to users; for a production app, use a server-side proxy.
+    let token = (document.getElementById('avwx-token')?.value || '').trim();
+    if (!token) {
+        try { token = (localStorage.getItem('avwxToken') || '').trim(); } catch (_) {}
+    }
+    if (!token) {
+        throw new Error(
+            'To fetch live NOTAMs, you need an AVWX API token. Open “Fetching settings”, paste your token, and try again.\n\nAlternatively, paste NOTAM text manually and decode.'
+        );
+    }
+
+    const url = `https://avwx.rest/api/notam/${encoded}?format=json&distance=10`;
+    const r = await fetch(url, {
+        cache: 'no-store',
+        headers: {
+            'Authorization': `Token ${token}`
+        }
+    });
+
+    if (r.status === 401 || r.status === 403) {
+        throw new Error('AVWX rejected the token (unauthorized). Double-check your token and plan access.');
+    }
+    if (!r.ok) {
+        throw new Error(`AVWX request failed with status ${r.status}.`);
+    }
+
+    const data = await r.json();
+    const notams = Array.isArray(data?.data) ? data.data : [];
+    const rawNotams = notams
+        .map((n) => (typeof n?.raw === 'string' ? n.raw.trim() : ''))
+        .filter(Boolean);
+
+    return rawNotams.join('\n\n');
 }
 
 function decodeNotamsFromInput() {
@@ -114,6 +128,18 @@ function decodeNotamsFromInput() {
     displayNotamResults(input.trim(), validateIcaoCode(icaoCode) ? icaoCode : '');
     resultSection.style.display = 'block';
 }
+
+// Load saved token into the field for convenience
+document.addEventListener('DOMContentLoaded', () => {
+    const tokenInput = document.getElementById('avwx-token');
+    if (!tokenInput) return;
+    try {
+        const saved = localStorage.getItem('avwxToken');
+        if (saved && typeof saved === 'string' && saved.trim()) {
+            tokenInput.value = saved.trim();
+        }
+    } catch (_) {}
+});
 
 function displayNotamResults(rawText, icaoCode) {
     const output = document.getElementById('notam-output');
