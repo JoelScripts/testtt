@@ -4,19 +4,53 @@ function exportBriefPDF() {
     function showPDFError(msg) {
         alert(msg || 'PDF export failed. Please try again or reload the page.');
     }
+    // Show loading indicator
+    function showPDFLoading() {
+        let loader = document.getElementById('pdf-loader-indicator');
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'pdf-loader-indicator';
+            loader.textContent = 'Loading PDF library...';
+            loader.style.position = 'fixed';
+            loader.style.top = '16px';
+            loader.style.right = '16px';
+            loader.style.background = '#764ba2';
+            loader.style.color = '#fff';
+            loader.style.padding = '8px 16px';
+            loader.style.borderRadius = '8px';
+            loader.style.zIndex = '9999';
+            loader.style.fontWeight = 'bold';
+            document.body.appendChild(loader);
+        }
+    }
+    function hidePDFLoading() {
+        const loader = document.getElementById('pdf-loader-indicator');
+        if (loader) loader.remove();
+    }
 
     // Load jsPDF if not present
     if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
         // Prevent multiple loads
-        if (document.getElementById('jspdf-loader')) return showPDFError('PDF library is still loading. Please wait a moment and try again.');
-        const script = document.createElement('script');
-        script.id = 'jspdf-loader';
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        script.onload = () => setTimeout(exportBriefPDF, 200);
-        script.onerror = () => showPDFError('Failed to load PDF library. Check your internet connection.');
-        document.body.appendChild(script);
+        if (!document.getElementById('jspdf-loader')) {
+            showPDFLoading();
+            const script = document.createElement('script');
+            script.id = 'jspdf-loader';
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.onload = () => {
+                hidePDFLoading();
+                setTimeout(exportBriefPDF, 100);
+            };
+            script.onerror = () => {
+                hidePDFLoading();
+                showPDFError('Failed to load PDF library. Check your internet connection.');
+            };
+            document.body.appendChild(script);
+        } else {
+            showPDFLoading();
+        }
         return;
     }
+    hidePDFLoading();
     const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
     if (!jsPDF) return showPDFError('PDF library not available.');
     try {
