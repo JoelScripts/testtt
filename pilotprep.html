@@ -34,159 +34,241 @@
                     <div>
                         <label class="small-label" for="pp-callsign">Callsign</label>
                         <input id="pp-callsign" type="text" placeholder="e.g., BAW123" />
-                    </div>
-                    <div>
-                        <label class="small-label" for="pp-aircraft">Aircraft</label>
-                        <input id="pp-aircraft" type="text" placeholder="e.g., A320 / B738" />
-                    </div>
-                    <div>
-                        <label class="small-label" for="pp-dep">Departure ICAO</label>
-                        <input id="pp-dep" type="text" maxlength="4" placeholder="e.g., EGLL" />
-                    </div>
-                    <div>
-                        <label class="small-label" for="pp-arr">Arrival ICAO</label>
-                        <input id="pp-arr" type="text" maxlength="4" placeholder="e.g., EHAM" />
-                    </div>
-                    <div>
-                        <label class="small-label" for="pp-alt">Alternate ICAO</label>
-                        <input id="pp-alt" type="text" maxlength="4" placeholder="optional" />
-                    </div>
-                    <div>
-                        <label class="small-label" for="pp-cruise">Cruise level</label>
-                        <input id="pp-cruise" type="text" placeholder="e.g., FL380" />
-                    </div>
-                </div>
-
-                <label class="small-label" for="pp-route" style="margin-top:12px;">Route (from SimBrief)</label>
-                <textarea id="pp-route" rows="3" placeholder="Paste the route string"></textarea>
-
-                <div class="btn-row">
-                    <button class="primary-btn" type="button" onclick="savePilotPlan()">Save</button>
-                    <button class="secondary-btn" type="button" onclick="loadPilotPlan()">Load</button>
-                    <button class="secondary-btn" type="button" onclick="runAllChecks()">Run Checks</button>
-                </div>
-                <p class="input-hint">Save stores your flight locally in your browser (localStorage).</p>
-            </div>
-
-            <div id="pp-output" class="result-section" style="display:none;">
-                <h2>Pilot Prep Output</h2>
-                <div id="pp-output-inner" class="decode-grid"></div>
-            </div>
-
-            <div class="divider"><span>TOOLS</span></div>
-
-            <div class="tool-sections">
-                <section class="tool-section">
-                    <h3>✅ Preflight Checklist</h3>
-                    <div id="pp-checklist"></div>
-                </section>
-
-                <section class="tool-section">
-                    <h3>📻 Clearance / Readback Builder</h3>
-                    <div class="tool-grid">
-                        <div>
-                            <label class="small-label" for="pp-sid">SID (optional)</label>
-                            <input id="pp-sid" type="text" placeholder="e.g., DVR1F" />
+                    <main>
+                        <div class="pilotprep-main">
+                            <div class="pilotprep-col2">
+                                <section class="pilotprep-section">
+                                    <div class="pilotprep-section-title">Flight Details</div>
+                                    <div class="tool-grid">
+                                        <div>
+                                            <label class="small-label" for="pp-callsign">Callsign</label>
+                                            <input id="pp-callsign" type="text" placeholder="e.g., BAW123" />
+                                        </div>
+                                        <div>
+                                            <label class="small-label" for="pp-aircraft">Aircraft</label>
+                                            <input id="pp-aircraft" type="text" placeholder="e.g., A320 / B738" />
+                                        </div>
+                                        <div>
+                                            <label class="small-label" for="pp-dep">Departure ICAO</label>
+                                            <input id="pp-dep" type="text" maxlength="4" placeholder="e.g., EGLL" />
+                                        </div>
+                                        <div>
+                                            <label class="small-label" for="pp-arr">Arrival ICAO</label>
+                                            <input id="pp-arr" type="text" maxlength="4" placeholder="e.g., EHAM" />
+                                        </div>
+                                        <div>
+                                            <label class="small-label" for="pp-alt">Alternate ICAO</label>
+                                            <input id="pp-alt" type="text" maxlength="4" placeholder="optional" />
+                                        </div>
+                                        <div>
+                                            <label class="small-label" for="pp-cruise">Cruise level</label>
+                                            <input id="pp-cruise" type="text" placeholder="e.g., FL380" />
+                                        </div>
+                                    </div>
+                                    <label class="small-label" for="pp-route" style="margin-top:8px;">Route (from SimBrief)</label>
+                                    <textarea id="pp-route" rows="2" placeholder="Paste the route string"></textarea>
+                                    <div class="btn-row">
+                                        <button class="primary-btn" type="button" onclick="savePilotPlan()">Save</button>
+                                        <button class="secondary-btn" type="button" onclick="loadPilotPlan()">Load</button>
+                                        <button class="secondary-btn" type="button" onclick="runAllChecks()">Run Checks</button>
+                                    </div>
+                                    <p class="input-hint">Save stores your flight locally in your browser (localStorage).</p>
+                                </section>
+                                <section class="pilotprep-section">
+                                    <div class="pilotprep-section-title">Departure & Route</div>
+                                    <section class="tool-section">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>✅ Preflight Checklist
+                                        </div>
+                                        <div id="pp-checklist"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>📻 Clearance / Readback Builder
+                                        </div>
+                                        <div class="tool-grid">
+                                            <div>
+                                                <label class="small-label" for="pp-sid">SID (optional)</label>
+                                                <input id="pp-sid" type="text" placeholder="e.g., DVR1F" />
+                                            </div>
+                                            <div>
+                                                <label class="small-label" for="pp-init-alt">Initial altitude</label>
+                                                <input id="pp-init-alt" type="text" placeholder="e.g., 6000ft / FL070" />
+                                            </div>
+                                            <div>
+                                                <label class="small-label" for="pp-squawk">Squawk</label>
+                                                <input id="pp-squawk" type="text" placeholder="e.g., 1234" />
+                                            </div>
+                                            <div>
+                                                <label class="small-label" for="pp-dep-freq">Departure freq</label>
+                                                <input id="pp-dep-freq" type="text" placeholder="e.g., 118.700" />
+                                            </div>
+                                            <div>
+                                                <label class="small-label" for="pp-qnh">QNH</label>
+                                                <input id="pp-qnh" type="text" placeholder="e.g., 1013" />
+                                            </div>
+                                            <div>
+                                                <label class="small-label" for="pp-runway">Runway</label>
+                                                <input id="pp-runway" type="text" placeholder="e.g., 27R" />
+                                            </div>
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="buildReadback()">Generate Readback</button>
+                                        </div>
+                                        <div id="pp-readback" class="decode-grid"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>💨 Winds / Runway Components
+                                        </div>
+                                        <div class="tool-grid">
+                                            <div>
+                                                <label class="small-label" for="pp-wind-dir">Wind direction</label>
+                                                <input id="pp-wind-dir" type="number" min="0" max="360" placeholder="e.g., 240" />
+                                            </div>
+                                            <div>
+                                                <label class="small-label" for="pp-wind-spd">Wind speed (kt)</label>
+                                                <input id="pp-wind-spd" type="number" min="0" placeholder="e.g., 15" />
+                                            </div>
+                                            <div>
+                                                <label class="small-label" for="pp-rwy-heading">Runway heading</label>
+                                                <input id="pp-rwy-heading" type="number" min="0" max="360" placeholder="e.g., 270" />
+                                            </div>
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="calcWindComponents()">Calculate</button>
+                                        </div>
+                                        <div id="pp-wind" class="decode-grid"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>🛣️ Route Tools
+                                        </div>
+                                        <div class="tool-grid">
+                                            <div>
+                                                <label class="small-label" for="pp-region">Region focus</label>
+                                                <select id="pp-region" class="route-select">
+                                                    <option value="auto" selected>Auto</option>
+                                                    <option value="uk-eu">UK / Europe</option>
+                                                    <option value="us">US / Canada</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="suggestRoute()">Suggest Better Route (cleanup)</button>
+                                            <button class="secondary-btn" type="button" onclick="formatRouteVariants()">Generate Filing Variants</button>
+                                        </div>
+                                        <div id="pp-route-tools" class="decode-grid"></div>
+                                    </section>
+                                </section>
+                            </div>
+                            <div class="pilotprep-col2">
+                                <section class="pilotprep-section">
+                                    <div class="pilotprep-section-title">Preflight & Weather</div>
+                                    <section class="tool-section">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>🛬 Runway & Procedure Suggestions
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="suggestProcedures()">Suggest Procedures</button>
+                                        </div>
+                                        <div id="pp-proc-suggest" class="decode-grid"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>🌦️ TAF (Forecast) Info
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="showTaf()">Show TAFs</button>
+                                        </div>
+                                        <div id="pp-taf" class="decode-grid"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>🛩️ VATSIM Traffic Snapshot
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="showTrafficSnapshot()">Show Traffic</button>
+                                        </div>
+                                        <div id="pp-traffic" class="decode-grid"></div>
+                                    </section>
+                                </section>
+                                <section class="pilotprep-section">
+                                    <div class="pilotprep-section-title">Enroute & Arrival</div>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>🌊 Oceanic (if applicable)
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="oceanicHelper()">Generate Oceanic Brief</button>
+                                            <button class="secondary-btn" type="button" onclick="oceanicClearanceHelper()">Oceanic Clearance Helper</button>
+                                        </div>
+                                        <div id="pp-oceanic" class="decode-grid"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>📻 Radio Frequency Planner
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="showRadioPlanner()">Show Frequencies</button>
+                                        </div>
+                                        <div id="pp-freqs" class="decode-grid"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>📝 Flightplan Filing Helper
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="showFlightplanHelper()">Generate Flightplan</button>
+                                        </div>
+                                        <div id="pp-fpl" class="decode-grid"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>🗣️ Voice/Readback Trainer
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="playReadbackTrainer()">Play Readback</button>
+                                        </div>
+                                        <div id="pp-voice" class="decode-grid"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>🧾 Airport Brief (scratchpad)
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="secondary-btn" type="button" onclick="insertBriefTemplate('dep')">Dep Template</button>
+                                            <button class="secondary-btn" type="button" onclick="insertBriefTemplate('arr')">Arr Template</button>
+                                            <button class="secondary-btn" type="button" onclick="insertBriefTemplate('full')">Full Template</button>
+                                            <button class="primary-btn" type="button" onclick="autoFillBrief()">Auto-Fill</button>
+                                            <button class="primary-btn" type="button" onclick="saveBrief()">Save Brief</button>
+                                            <button class="secondary-btn" type="button" onclick="exportBrief()">Export</button>
+                                            <button class="secondary-btn" type="button" onclick="importBrief()">Import</button>
+                                        </div>
+                                        <textarea id="pp-brief" rows="5" placeholder="Notes: gates/stands, taxi hotspots, runway configs, etc."></textarea>
+                                    </section>
+                                </section>
+                                <section class="pilotprep-section">
+                                    <div class="pilotprep-section-title">ATC & Reminders</div>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>🧑‍✈️ Active ATC Snapshot (VATSIM)
+                                        </div>
+                                        <div class="btn-row">
+                                            <button class="primary-btn" type="button" onclick="loadAtcSnapshot()">Load ATC</button>
+                                        </div>
+                                        <div id="pp-atc" class="decode-grid"></div>
+                                    </section>
+                                    <section class="tool-section collapsed">
+                                        <div class="tool-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                            <span class="toggle-arrow">▶</span>🧠 Smart Reminders
+                                        </div>
+                                        <div id="pp-reminders" class="decode-grid"></div>
+                                    </section>
+                                </section>
+                            </div>
                         </div>
-                        <div>
-                            <label class="small-label" for="pp-init-alt">Initial altitude</label>
-                            <input id="pp-init-alt" type="text" placeholder="e.g., 6000ft / FL070" />
-                        </div>
-                        <div>
-                            <label class="small-label" for="pp-squawk">Squawk</label>
-                            <input id="pp-squawk" type="text" placeholder="e.g., 1234" />
-                        </div>
-                        <div>
-                            <label class="small-label" for="pp-dep-freq">Departure freq</label>
-                            <input id="pp-dep-freq" type="text" placeholder="e.g., 118.700" />
-                        </div>
-                        <div>
-                            <label class="small-label" for="pp-qnh">QNH</label>
-                            <input id="pp-qnh" type="text" placeholder="e.g., 1013" />
-                        </div>
-                        <div>
-                            <label class="small-label" for="pp-runway">Runway</label>
-                            <input id="pp-runway" type="text" placeholder="e.g., 27R" />
-                        </div>
-                    </div>
-                    <div class="btn-row">
-                        <button class="primary-btn" type="button" onclick="buildReadback()">Generate Readback</button>
-                    </div>
-                    <div id="pp-readback" class="decode-grid"></div>
-                </section>
-
-                <section class="tool-section">
-                    <h3>💨 Winds / Runway Components</h3>
-                    <div class="tool-grid">
-                        <div>
-                            <label class="small-label" for="pp-wind-dir">Wind direction</label>
-                            <input id="pp-wind-dir" type="number" min="0" max="360" placeholder="e.g., 240" />
-                        </div>
-                        <div>
-                            <label class="small-label" for="pp-wind-spd">Wind speed (kt)</label>
-                            <input id="pp-wind-spd" type="number" min="0" placeholder="e.g., 15" />
-                        </div>
-                        <div>
-                            <label class="small-label" for="pp-rwy-heading">Runway heading</label>
-                            <input id="pp-rwy-heading" type="number" min="0" max="360" placeholder="e.g., 270" />
-                        </div>
-                    </div>
-                    <div class="btn-row">
-                        <button class="primary-btn" type="button" onclick="calcWindComponents()">Calculate</button>
-                    </div>
-                    <div id="pp-wind" class="decode-grid"></div>
-                </section>
-
-                <section class="tool-section">
-                    <h3>🛣️ Route Tools</h3>
-                    <div class="tool-grid">
-                        <div>
-                            <label class="small-label" for="pp-region">Region focus</label>
-                            <select id="pp-region" class="route-select">
-                                <option value="auto" selected>Auto</option>
-                                <option value="uk-eu">UK / Europe</option>
-                                <option value="us">US / Canada</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="btn-row">
-                        <button class="primary-btn" type="button" onclick="suggestRoute()">Suggest Better Route (cleanup)</button>
-                        <button class="secondary-btn" type="button" onclick="formatRouteVariants()">Generate Filing Variants</button>
-                    </div>
-                    <div id="pp-route-tools" class="decode-grid"></div>
-                </section>
-
-                <section class="tool-section">
-                    <h3>🌊 Oceanic (if applicable)</h3>
-                    <div class="btn-row">
-                        <button class="primary-btn" type="button" onclick="oceanicHelper()">Generate Oceanic Brief</button>
-                    </div>
-                    <div id="pp-oceanic" class="decode-grid"></div>
-                </section>
-
-                <section class="tool-section">
-                    <h3>🧾 Airport Brief (scratchpad)</h3>
-                    <div class="btn-row">
-                        <button class="secondary-btn" type="button" onclick="insertBriefTemplate()">Insert Template</button>
-                        <button class="primary-btn" type="button" onclick="saveBrief()">Save Brief</button>
-                    </div>
-                    <textarea id="pp-brief" rows="8" placeholder="Notes: gates/stands, taxi hotspots, runway configs, etc."></textarea>
-                </section>
-
-                <section class="tool-section">
-                    <h3>🧑‍✈️ Active ATC Snapshot (VATSIM)</h3>
-                    <div class="btn-row">
-                        <button class="primary-btn" type="button" onclick="loadAtcSnapshot()">Load ATC</button>
-                    </div>
-                    <div id="pp-atc" class="decode-grid"></div>
-                </section>
-
-                <section class="tool-section">
-                    <h3>🧠 Smart Reminders</h3>
-                    <div id="pp-reminders" class="decode-grid"></div>
-                </section>
-            </div>
-        </main>
+                    </main>
 
         <footer>
             <p>© 2026 METAR Decoder | For educational purposes</p>

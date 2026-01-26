@@ -1,3 +1,224 @@
+#pp-checklist {
+    width: 420px;
+    min-height: 420px;
+    max-width: 98vw;
+    margin: 24px auto 24px auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #f9fafd;
+    border-radius: 18px;
+    box-shadow: 0 2px 12px rgba(102, 126, 234, 0.07);
+    border: 1.5px solid #e2e8f0;
+    padding: 24px 18px 24px 18px;
+}
+#pp-checklist-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px 18px;
+    width: 100%;
+    justify-content: center;
+}
+#pp-checklist .checklist-item {
+    width: 190px;
+    min-height: 56px;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    font-size: 1.08em;
+    display: flex;
+    align-items: flex-start;
+    box-shadow: 0 1px 2px rgba(102,126,234,0.03);
+    margin-bottom: 0;
+}
+#pp-checklist .checklist-item:last-child {
+    margin-bottom: 0;
+}
+#pp-checklist input[type="checkbox"] {
+    margin-right: 10px;
+    margin-top: 2px;
+    transform: scale(1.2);
+}
+@media (max-width: 600px) {
+    #pp-checklist {
+        width: 98vw;
+        min-height: unset;
+        padding: 10px 2vw 10px 2vw;
+    }
+    #pp-checklist-list {
+        flex-direction: column;
+        gap: 12px 0;
+    }
+    #pp-checklist .checklist-item {
+        width: 100%;
+    }
+}
+/* Improve checklist item spacing and padding */
+#pp-checklist .checklist-item {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    font-size: 1.08em;
+    display: flex;
+    align-items: flex-start;
+    min-height: 44px;
+    box-shadow: 0 1px 2px rgba(102,126,234,0.03);
+}
+#pp-checklist .checklist-item:last-child {
+    margin-bottom: 0;
+}
+#pp-checklist input[type="checkbox"] {
+    margin-right: 10px;
+    margin-top: 2px;
+    transform: scale(1.2);
+}
+/* --- Pilot Prep improved single-column layout --- */
+/* --- Pilot Prep compact two-column layout --- */
+.pilotprep-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.pilotprep-col2 {
+    flex: 1 1 0;
+    min-width: 340px;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.pilotprep-section {
+    margin-bottom: 24px;
+    padding: 28px 24px 20px 24px;
+    background: #f7fafc;
+    border-radius: 18px;
+    box-shadow: 0 2px 12px rgba(102, 126, 234, 0.07);
+    border: 1.5px solid #e2e8f0;
+}
+
+.pilotprep-section-title {
+    font-size: 1.22em;
+    font-weight: 700;
+    color: #764ba2;
+    margin-bottom: 18px;
+    margin-top: 0;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 0 #fff, 0 2px 8px #e0d6f7;
+}
+
+.pilotprep-divider {
+    height: 1.5px;
+    background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+    border: none;
+    margin: 18px 0 12px 0;
+    border-radius: 2px;
+}
+
+@media (max-width: 900px) {
+    .pilotprep-main {
+        flex-direction: column;
+        max-width: 98vw;
+        padding: 0 2vw;
+    }
+    .pilotprep-col2 {
+        max-width: 100vw;
+    }
+    .pilotprep-section {
+        padding: 10px 2vw 8px 2vw;
+    }
+}
+
+/* Compact input/textarea */
+.pilotprep-section input,
+.pilotprep-section textarea {
+    padding: 10px 12px;
+    font-size: 1.08em;
+    margin-bottom: 14px;
+    min-height: 36px;
+    border-radius: 7px;
+    border: 1.5px solid #d1d5db;
+    background: #fff;
+    transition: border 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 2px rgba(102,126,234,0.03);
+}
+.pilotprep-section input:focus,
+.pilotprep-section textarea:focus {
+    border: 1.5px solid #764ba2;
+    outline: none;
+    box-shadow: 0 0 0 2px #e0d6f7;
+}
+.pilotprep-section textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* Add more vertical spacing between fields in tool-grid */
+.tool-grid > div {
+    margin-bottom: 18px;
+}
+
+/* Collapsible tool section */
+.tool-section {
+    margin-bottom: 8px;
+    border-left: 3px solid #e2e8f0;
+    padding-left: 8px;
+}
+.tool-section.collapsed > *:not(.tool-section-header) {
+    display: none;
+}
+.tool-section-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+    color: #4b5563;
+    margin-bottom: 2px;
+}
+.tool-section-header .toggle-arrow {
+    font-size: 1.1em;
+    margin-right: 6px;
+    transition: transform 0.2s;
+}
+.tool-section.collapsed .tool-section-header .toggle-arrow {
+    transform: rotate(-90deg);
+}
+/* --- Improved text box styles for all inputs and textareas --- */
+input[type="text"], input[type="number"], textarea {
+    width: 100%;
+    padding: 14px 12px;
+    font-size: 1.08em;
+    border: 2px solid #cbd5e0;
+    border-radius: 8px;
+    font-family: 'Segoe UI', 'Courier New', monospace, Arial, sans-serif;
+    background: #f9fafb;
+    color: #2d3748;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+}
+
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+    outline: none;
+    border-color: #764ba2;
+    background: #fff;
+    box-shadow: 0 0 0 2px #b794f433;
+}
+
+textarea {
+    min-height: 60px;
+    resize: vertical;
+    line-height: 1.5;
+}
 * {
     margin: 0;
     padding: 0;
