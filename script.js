@@ -1077,44 +1077,25 @@ window.suggestLandingRunway = async function suggestLandingRunway() {
     }
     let windDir = windMatch[1] === 'VRB' ? null : parseInt(windMatch[1]);
     let windSpd = parseInt(windMatch[2]);
-    // Try local runways.json first, then fallback to a public CORS proxy for OurAirports CSV
+    // Fetch runways from your local full runways.json (array of objects)
     output.textContent = 'Fetching runway data...';
     let runways = [];
     try {
-        // Try local JSON
         const resp = await fetch('runways.json');
         const allRunways = await resp.json();
-        runways = allRunways[icao] || [];
-    } catch {}
-    if (!runways.length) {
-        // Fallback: fetch from OurAirports CSV via CORS proxy
-        try {
-            const proxy = 'https://corsproxy.io/?';
-            const url = proxy + encodeURIComponent('https://ourairports.com/data/runways.csv');
-            const resp = await fetch(url);
-            const csv = await resp.text();
-            const lines = csv.split(/\r?\n/);
-            const headers = lines[0].split(',');
-            const identIdx = headers.indexOf('airport_ident');
-            const leHeadingIdx = headers.indexOf('le_heading_degT');
-            const leIdentIdx = headers.indexOf('le_ident');
-            const heHeadingIdx = headers.indexOf('he_heading_degT');
-            const heIdentIdx = headers.indexOf('he_ident');
-            for (let i = 1; i < lines.length; i++) {
-                const row = lines[i].split(',');
-                if (row[identIdx] === icao) {
-                    if (row[leIdentIdx] && row[leHeadingIdx]) {
-                        runways.push({ id: row[leIdentIdx].replace(/"/g, ''), heading: parseInt(row[leHeadingIdx]) });
-                    }
-                    if (row[heIdentIdx] && row[heHeadingIdx]) {
-                        runways.push({ id: row[heIdentIdx].replace(/"/g, ''), heading: parseInt(row[heHeadingIdx]) });
-                    }
-                }
+        // allRunways is an array of runway objects, filter for this ICAO
+        const filtered = allRunways.filter(rwy => rwy.airport_ident && rwy.airport_ident.toUpperCase() === icao);
+        filtered.forEach(rwy => {
+            if (rwy.le_ident && rwy.le_heading_degT) {
+                runways.push({ id: rwy.le_ident, heading: parseInt(rwy.le_heading_degT) });
             }
-        } catch (e) {
-            output.textContent = 'Failed to fetch runway data.';
-            return;
-        }
+            if (rwy.he_ident && rwy.he_heading_degT) {
+                runways.push({ id: rwy.he_ident, heading: parseInt(rwy.he_heading_degT) });
+            }
+        });
+    } catch (e) {
+        output.textContent = 'Failed to fetch runway data.';
+        return;
     }
     if (!runways.length) {
         output.textContent = 'No runway data found for this airport.';
