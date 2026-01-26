@@ -1,0 +1,16 @@
+{
+  "CYVR": [
+    { "id": "08L", "heading": 81 },
+    { "id": "26R", "heading": 261 },
+    { "id": "08R", "heading": 84 },
+    { "id": "26L", "heading": 264 },
+    { "id": "13", "heading": 134 },
+    { "id": "31", "heading": 314 }
+  ],
+  "EGCC": [
+    { "id": "05L", "heading": 53 },
+    { "id": "23R", "heading": 233 },
+    { "id": "05R", "heading": 55 },
+    { "id": "23L", "heading": 235 }
+  ]
+}
