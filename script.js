@@ -1077,12 +1077,14 @@ window.suggestLandingRunway = function suggestLandingRunway() {
     }
     let windDir = windMatch[1] === 'VRB' ? null : parseInt(windMatch[1]);
     let windSpd = parseInt(windMatch[2]);
-    // Example: hardcoded runways for demo; in production, fetch real runways from an API
+    // Real CYVR runways with headings
     const runways = [
-        { id: '09', heading: 90 },
-        { id: '27', heading: 270 },
-        { id: '05', heading: 50 },
-        { id: '23', heading: 230 }
+        { id: '08L', heading: 81 },
+        { id: '26R', heading: 261 },
+        { id: '08R', heading: 84 },
+        { id: '26L', heading: 264 },
+        { id: '13', heading: 134 },
+        { id: '31', heading: 314 }
     ];
     let bestRunway = null;
     let bestHeadwind = -Infinity;
@@ -1090,7 +1092,8 @@ window.suggestLandingRunway = function suggestLandingRunway() {
     runways.forEach(rwy => {
         let headwind = 0;
         if (windDir !== null) {
-            const angle = Math.abs(windDir - rwy.heading);
+            let angle = Math.abs(windDir - rwy.heading);
+            if (angle > 180) angle = 360 - angle;
             headwind = Math.round(windSpd * Math.cos(angle * Math.PI / 180));
         } else {
             headwind = 0; // VRB wind, can't calculate
