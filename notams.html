@@ -16,10 +16,11 @@
                 </div>
                 <div class="nav-controls">
                     <label class="nav-label" for="site-nav">Navigate:</label>
-                    <select id="site-nav" class="nav-select" aria-label="Site navigation">
+                    <select id="site-nav" class="nav-select" aria-label="Site navigation" onchange="navigatePage()">
                         <option value="index.html">METAR / VATSIM ATIS</option>
                         <option value="notams.html" selected>NOTAMs</option>
                         <option value="routecheck.html">Route Checker</option>
+                        <option value="pilotprep.html">Pilot Prep</option>
                     </select>
                     <button class="nav-btn" type="button" onclick="navigatePage()">Go</button>
                 </div>

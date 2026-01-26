@@ -12,6 +12,7 @@ Visit the live website: **https://joelscripts.github.io/testtt/**
 - **✈️ VATSIM ATIS Decoder**: Fetch and decode live ATIS from VATSIM network airports with active ATC (via the official VATSIM data feed)
 - **🛑 NOTAM Decoder (New)**: Fetch and decode current NOTAMs for an airport (with manual paste fallback if fetching is blocked)
 - **🧭 Route Checker (New)**: Paste a SimBrief route and get a quick “looks OK / likely reroute / invalid format” check based on common VATSIM issues
+- **🧰 Pilot Prep (New)**: An all-in-one preflight page (checklist, readback builder, wind components, route cleanup/variants, oceanic helper, ATC snapshot, reminders)
 - **Input Validation**: Built-in validation ensures only valid 4-letter ICAO codes are submitted
 - **Easy-to-use interface**: Simply paste a METAR code and get instant human-readable translations
 - **Comprehensive decoding**: Decodes all major METAR components including:
@@ -56,6 +57,13 @@ Use the navigation dropdown in the header to switch to the NOTAMs page.
 - **Fetch NOTAMs:** Enter an ICAO and click "Fetch NOTAMs"
 - **Manual Decode:** Paste one or more NOTAMs and click "Decode NOTAMs"
 
+### Pilot Prep Page
+Use the navigation dropdown in the header to switch to the Pilot Prep page.
+
+- Enter flight details (callsign / aircraft / dep / arr / route)
+- Use the tools to generate readbacks, compute crosswind/headwind, and produce route variants
+- "Load ATC" pulls live controllers from the VATSIM data feed (requires running on `http(s)`; `file://` will block fetch)
+
 ### Notes on NOTAM Fetching
 NOTAM providers often require API keys or block cross-origin requests from browser apps.
 
@@ -88,6 +96,8 @@ ATIS (Automatic Terminal Information Service) is a continuous broadcast of recor
 - `notams.js` - NOTAM fetching and decoding logic
 - `routecheck.html` - SimBrief route checker page
 - `routecheck.js` - Route parsing and sanity checks
+- `pilotprep.html` - Pilot Prep (preflight toolkit) page
+- `pilotprep.js` - Pilot Prep tool logic
 - `.github/workflows/deploy.yml` - GitHub Pages deployment configuration
 
 ## Browser Compatibility
