@@ -281,6 +281,100 @@ main {
     transform: translateY(0);
 }
 
+/* Route Checker controls */
+.route-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.route-field input {
+    width: 100%;
+    padding: 15px;
+    font-size: 1em;
+    border: 2px solid #cbd5e0;
+    border-radius: 8px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    transition: border-color 0.3s;
+}
+
+.route-field input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.small-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #2d3748;
+}
+
+#route-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 1em;
+    border: 2px solid #cbd5e0;
+    border-radius: 8px;
+    resize: vertical;
+    font-family: 'Courier New', monospace;
+    transition: border-color 0.3s;
+}
+
+#route-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+#check-route-btn {
+    width: 100%;
+    padding: 15px;
+    margin-top: 15px;
+    font-size: 1.1em;
+    font-weight: bold;
+    background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#check-route-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(107, 70, 193, 0.35);
+}
+
+#check-route-btn:active {
+    transform: translateY(0);
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: bold;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.status-ok {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.status-warn {
+    background: #feebc8;
+    color: #7b341e;
+}
+
+.status-bad {
+    background: #fed7d7;
+    color: #822727;
+}
+
 .notam-settings {
     margin-top: 10px;
 }

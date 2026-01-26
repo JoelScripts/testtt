@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Checker - SimBrief Route Validation (VATSIM)</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>🧭 Route Checker</h1>
+                    <p class="subtitle">Check SimBrief routes for common VATSIM issues</p>
+                </div>
+                <div class="nav-controls">
+                    <label class="nav-label" for="site-nav">Navigate:</label>
+                    <select id="site-nav" class="nav-select" aria-label="Site navigation">
+                        <option value="index.html">METAR / VATSIM ATIS</option>
+                        <option value="notams.html">NOTAMs</option>
+                        <option value="routecheck.html" selected>Route Checker</option>
+                    </select>
+                    <button class="nav-btn" type="button" onclick="navigatePage()">Go</button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <label>Flight Plan Info (optional but recommended):</label>
+                <div class="route-row">
+                    <div class="route-field">
+                        <label class="small-label" for="route-dep">Departure ICAO</label>
+                        <input id="route-dep" type="text" maxlength="4" placeholder="e.g., EGLL" />
+                    </div>
+                    <div class="route-field">
+                        <label class="small-label" for="route-arr">Arrival ICAO</label>
+                        <input id="route-arr" type="text" maxlength="4" placeholder="e.g., KJFK" />
+                    </div>
+                </div>
+                <p class="input-hint">If you enter airports, the checker can verify the route starts/ends correctly.</p>
+            </div>
+
+            <div class="input-section">
+                <label for="route-input">Paste your SimBrief route:</label>
+                <textarea
+                    id="route-input"
+                    placeholder="Example: EGLL DVR UL9 KONAN UL607 BUB DCT DOGAL NATZ N0500F390 DCT ALLRY N149A YQX CYQX DCT JFK KJFK"
+                    rows="4"
+                ></textarea>
+                <button id="check-route-btn" onclick="checkRoute()">Check Route</button>
+                <p class="input-hint">
+                    Note: A static website can’t do full IFPS validation. This checks format + common reasons ATC may reroute you.
+                </p>
+            </div>
+
+            <div id="route-result-section" class="result-section" style="display: none;">
+                <h2>Route Check</h2>
+                <div id="route-output"></div>
+            </div>
+
+            <div class="info-section">
+                <h3>What this checks</h3>
+                <p>
+                    - Basic route format and characters
+                    - Departure/arrival placement (if provided)
+                    - Common “reroute triggers” (excess DCT, runway/SID/STAR in-route, malformed NAT tokens, etc.)
+                </p>
+                <p>
+                    For official validation, use your vACC’s preferred routes and follow ATC instructions.
+                </p>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2026 METAR Decoder | For educational purposes</p>
+        </footer>
+    </div>
+
+    <script src="routecheck.js"></script>
+</body>
+</html>
