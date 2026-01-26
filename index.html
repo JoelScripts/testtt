@@ -14,8 +14,27 @@
         </header>
 
         <main>
+            <div class="input-section icao-section">
+                <label for="icao-input">Enter Airport ICAO Code:</label>
+                <div class="icao-input-group">
+                    <input 
+                        type="text" 
+                        id="icao-input" 
+                        placeholder="e.g., KJFK, EGLL, KSFO"
+                        maxlength="4"
+                        pattern="[A-Za-z0-9]{4}"
+                    />
+                    <button id="fetch-btn" onclick="fetchMetar()">Fetch Current METAR</button>
+                </div>
+                <p class="input-hint">Enter a 4-letter ICAO code to fetch live METAR data</p>
+            </div>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
             <div class="input-section">
-                <label for="metar-input">Enter METAR Code:</label>
+                <label for="metar-input">Enter METAR Code Manually:</label>
                 <textarea 
                     id="metar-input" 
                     placeholder="Example: KJFK 121251Z 24016G28KT 10SM FEW250 23/14 A3012 RMK AO2 SLP201 T02330139"
@@ -34,6 +53,30 @@
             <div id="result-section" class="result-section" style="display: none;">
                 <h2>Decoded Weather Report</h2>
                 <div id="decoded-output"></div>
+            </div>
+
+            <div class="divider">
+                <span>ALSO AVAILABLE</span>
+            </div>
+
+            <div class="input-section atis-section">
+                <label for="atis-icao-input">Decode VATSIM ATIS:</label>
+                <div class="icao-input-group">
+                    <input 
+                        type="text" 
+                        id="atis-icao-input" 
+                        placeholder="e.g., KJFK, EGLL, KSFO"
+                        maxlength="4"
+                        pattern="[A-Za-z0-9]{4}"
+                    />
+                    <button id="fetch-atis-btn" onclick="fetchAtis()">Fetch & Decode ATIS</button>
+                </div>
+                <p class="input-hint">Enter an ICAO code to fetch and decode live VATSIM ATIS if available</p>
+            </div>
+
+            <div id="atis-result-section" class="result-section" style="display: none;">
+                <h2>Decoded VATSIM ATIS</h2>
+                <div id="atis-output"></div>
             </div>
 
             <div class="info-section">
