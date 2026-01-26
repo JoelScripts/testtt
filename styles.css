@@ -300,6 +300,21 @@ main {
     transition: border-color 0.3s;
 }
 
+.route-select {
+    width: 100%;
+    padding: 15px;
+    font-size: 1em;
+    border: 2px solid #cbd5e0;
+    border-radius: 8px;
+    transition: border-color 0.3s;
+    background: #fff;
+}
+
+.route-select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
 .route-field input:focus {
     outline: none;
     border-color: #667eea;
@@ -373,6 +388,12 @@ main {
 .status-bad {
     background: #fed7d7;
     color: #822727;
+}
+
+.mono {
+    font-family: 'Courier New', monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .notam-settings {

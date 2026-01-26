@@ -38,8 +38,24 @@
                         <label class="small-label" for="route-arr">Arrival ICAO</label>
                         <input id="route-arr" type="text" maxlength="4" placeholder="e.g., KJFK" />
                     </div>
+                    <div class="route-field">
+                        <label class="small-label" for="route-region">Region focus</label>
+                        <select id="route-region" class="route-select">
+                            <option value="auto" selected>Auto (based on airports)</option>
+                            <option value="uk-eu">UK / Europe</option>
+                            <option value="us">US / Canada</option>
+                        </select>
+                    </div>
+                    <div class="route-field">
+                        <label class="small-label" for="nav-db">Nav database</label>
+                        <select id="nav-db" class="route-select">
+                            <option value="builtin" selected>Built-in checks (no nav DB)</option>
+                            <option value="navigraph">Navigraph AIRAC (requires backend)</option>
+                        </select>
+                    </div>
                 </div>
                 <p class="input-hint">If you enter airports, the checker can verify the route starts/ends correctly.</p>
+                <p class="input-hint">Note: Navigraph AIRAC can’t be used directly from a static site; it needs a server/proxy with your Navigraph developer access.</p>
             </div>
 
             <div class="input-section">

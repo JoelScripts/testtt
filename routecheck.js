@@ -15,6 +15,8 @@ function validateIcaoCode(code) {
 function checkRoute() {
     const dep = (document.getElementById('route-dep')?.value || '').trim().toUpperCase();
     const arr = (document.getElementById('route-arr')?.value || '').trim().toUpperCase();
+    const regionPref = (document.getElementById('route-region')?.value || 'auto').toLowerCase();
+    const navDb = (document.getElementById('nav-db')?.value || 'builtin').toLowerCase();
     const raw = (document.getElementById('route-input')?.value || '').trim();
 
     const resultSection = document.getElementById('route-result-section');
@@ -41,7 +43,11 @@ function checkRoute() {
     const normalized = normalizeRouteText(raw);
     const tokens = tokenizeRoute(normalized);
 
-    const { status, reasons, suggestions, parsed } = analyzeRoute(tokens, dep, arr);
+    const { status, reasons, suggestions, parsed } = analyzeRoute(tokens, dep, arr, regionPref);
+
+    // Suggested improved route (format cleanup / ATC-friendly)
+    const region = detectRegion(dep, arr, regionPref);
+    const suggestion = suggestBetterRoute(tokens, dep, arr, region);
 
     // Status card
     const statusCard = document.createElement('div');
@@ -60,6 +66,24 @@ function checkRoute() {
 
     // Parsed summary
     output.appendChild(makeCard('🧩 Parsed', parsed));
+
+    // Navigraph note (requires backend)
+    if (navDb === 'navigraph') {
+        output.appendChild(
+            makeCard(
+                '🗺️ Navigraph AIRAC',
+                'Using Navigraph AIRAC to truly validate waypoints/airways requires a backend service (to keep credentials private and comply with licensing).\n\nThis page currently provides best-effort format + region heuristics and a cleaned route suggestion.'
+            )
+        );
+    }
+
+    // Better route suggestion
+    if (suggestion?.route) {
+        output.appendChild(makeCard('🛣️ Suggested Route (cleanup)', suggestion.route, true));
+        if (suggestion.notes?.length) {
+            output.appendChild(makeCard('📝 Why this is better', suggestion.notes.join('\n')));
+        }
+    }
 
     // Reasons
     if (reasons.length) {
@@ -106,9 +130,11 @@ function tokenizeRoute(route) {
         .filter(Boolean);
 }
 
-function analyzeRoute(tokens, dep, arr) {
+function analyzeRoute(tokens, dep, arr, regionPref) {
     const reasons = [];
     const suggestions = [];
+
+    const region = detectRegion(dep, arr, regionPref);
 
     const illegal = tokens.find((t) => /[^A-Z0-9\/\-]/.test(t));
     if (illegal) {
@@ -120,17 +146,32 @@ function analyzeRoute(tokens, dep, arr) {
             },
             reasons: ['Only letters/numbers and / - are expected in a route line.'],
             suggestions: ['Remove commas/periods/special symbols and try again.'],
-            parsed: buildParsedSummary(tokens, dep, arr)
+            parsed: buildParsedSummary(tokens, dep, arr, region)
         };
     }
 
-    // Count DCT usage
+    // Count DCT usage (region-aware)
     const dctCount = tokens.filter((t) => t === 'DCT').length;
-    if (dctCount >= 6) {
-        reasons.push(`Heavy DCT usage (${dctCount}x). Many FIRs/vACCs prefer structured airways.`);
-        suggestions.push('Try generating a route with more airways (UL/UT/UQ/etc) or use local preferred routes.');
-    } else if (dctCount >= 3) {
-        reasons.push(`Moderate DCT usage (${dctCount}x). You may get a minor reroute.`);
+    const dctWarn = region.family === 'europe' ? 3 : 5;
+    const dctHeavy = region.family === 'europe' ? 5 : 8;
+    if (dctCount >= dctHeavy) {
+        reasons.push(`Heavy DCT usage (${dctCount}x) for ${region.label}. You will often be rerouted onto airways.`);
+        suggestions.push(region.family === 'europe'
+            ? 'Try a route with more airways (UL/UM/UN/UT/UQ/etc) and fewer DCT segments.'
+            : 'DCT is common in the US, but excessive DCT can still trigger amendments. Consider adding airways (J/Q/V/T) where appropriate.'
+        );
+    } else if (dctCount >= dctWarn) {
+        reasons.push(`Moderate DCT usage (${dctCount}x) for ${region.label}. You may get a reroute depending on the sector.`);
+    }
+
+    // Airway presence expectations (Europe tends to be airway-heavy)
+    const airwayCount = tokens.filter((t) => /^(U|UL|UM|UN|UT|UZ|T|Q|J|V)\d{1,3}[A-Z]?$/.test(t)).length;
+    const hasAnyAirway = airwayCount > 0;
+    const nonDctTokens = tokens.filter((t) => t !== 'DCT');
+    const seemsEnroute = nonDctTokens.length >= 6;
+    if (region.family === 'europe' && seemsEnroute && !hasAnyAirway) {
+        reasons.push('No airway designators detected. In Europe/UK, fully “direct-to” routes are commonly amended to preferred airways.');
+        suggestions.push('Add upper airways (e.g., UL9/UN14/UMxxx) where appropriate, or use your vACC preferred route.');
     }
 
     // Departure/arrival placement checks
@@ -153,6 +194,21 @@ function analyzeRoute(tokens, dep, arr) {
         }
     }
 
+    // UK-focused hinting for common boundary/exit fixes (non-blocking)
+    if (region.ukInvolved) {
+        const ukBoundaryFixes = new Set([
+            // Common UK/London area exits / entry points (not exhaustive)
+            'DVR', 'DET', 'BIG', 'LAM', 'BPK', 'CPT', 'SAM', 'OCK',
+            'BCN', 'WAL', 'POL', 'TLA', 'SFD', 'KENET', 'LOGAN',
+            'GOW', 'KONAN', 'NANTI', 'MIMKU', 'LAPRA', 'BUZAD', 'BEXET'
+        ]);
+        const hasBoundaryFix = tokens.slice(0, 12).some((t) => ukBoundaryFixes.has(t));
+        if (!hasBoundaryFix && tokens.length >= 8) {
+            reasons.push('UK/Europe: no common UK boundary/exit fix detected early in the route. This can lead to a departure/entry reroute.');
+            suggestions.push('If you are departing/arriving UK, check vNATS/vACC preferred routings and ensure you use the correct exit/entry fix for your runway/SID/STAR.');
+        }
+    }
+
     // SID/STAR/runway text in route line is often discouraged
     const hasRunway = tokens.some((t) => /^RW\d{2}[LRC]?$/.test(t) || /^\d{2}[LRC]?$/.test(t));
     const hasSidStarWords = tokens.some((t) => ['SID', 'STAR', 'DEPARTURE', 'ARRIVAL'].includes(t));
@@ -163,7 +219,20 @@ function analyzeRoute(tokens, dep, arr) {
         suggestions.push('Consider removing runway/SID/STAR names from the route line unless your vACC specifically asks for them.');
     }
 
-    // NAT / oceanic track sanity
+    // Transatlantic / oceanic sanity
+    const hasNAT = tokens.some((t) => /^NAT[A-Z\d]{1,2}$/.test(t));
+    const hasLatLon = tokens.some((t) => /^\d{2}[NS]\d{3}[EW]$/.test(t) || /^\d{4}[NS]\d{5}[EW]$/.test(t));
+    const isTransatlantic = region.kind === 'transatlantic';
+    if (isTransatlantic && !hasNAT && !hasLatLon) {
+        reasons.push('Transatlantic route detected, but no NAT track or lat/long points found. You may be rerouted to an oceanic clearance.');
+        suggestions.push('Include a valid NAT track (e.g., NATA) or published oceanic coordinates for your direction/time.');
+    }
+    if (!isTransatlantic && (hasNAT || hasLatLon) && region.family === 'europe') {
+        reasons.push('Oceanic (NAT/lat-long) tokens found on a non-transatlantic Europe/UK route. This looks accidental.');
+        suggestions.push('Remove the oceanic segment unless you are actually flying an oceanic portion.');
+    }
+
+    // NAT token sanity
     const natTokens = tokens.filter((t) => t.startsWith('NAT'));
     if (natTokens.length) {
         const malformed = natTokens.find((t) => !/^NAT[A-Z]$/.test(t) && !/^NAT\d{1,2}$/.test(t));
@@ -190,7 +259,7 @@ function analyzeRoute(tokens, dep, arr) {
     const tokenTypes = classifyTokens(tokens);
     if (tokenTypes.unknown.length > 0) {
         reasons.push(`Unrecognized tokens: ${tokenTypes.unknown.slice(0, 8).join(', ')}${tokenTypes.unknown.length > 8 ? '…' : ''}`);
-        suggestions.push('Double-check for typos. This tool can’t confirm every waypoint without a nav database.');
+        suggestions.push('Double-check for typos. This tool can’t confirm every waypoint/airway without a nav database.');
     }
 
     // Final status selection
@@ -201,7 +270,7 @@ function analyzeRoute(tokens, dep, arr) {
             className: 'status-bad',
             description: 'The route appears malformed or incomplete.'
         };
-    } else if (reasons.length >= 2 || dctCount >= 6) {
+    } else if (reasons.length >= 2 || dctCount >= dctHeavy) {
         status = {
             label: 'Likely reroute',
             className: 'status-warn',
@@ -216,7 +285,10 @@ function analyzeRoute(tokens, dep, arr) {
     }
 
     if (!suggestions.length) {
-        suggestions.push('Check your vACC preferred routes for your departure/arrival pair.');
+        suggestions.push(region.family === 'europe'
+            ? 'Check your vACC/vFIR preferred routes (UK: vNATS) for your city pair and runway direction.'
+            : 'Check preferred routes for your city pair (US: FAA preferred routes / common ATC routings).'
+        );
         suggestions.push('If ATC issues a reroute, read back and update the FMC route accordingly.');
     }
 
@@ -224,8 +296,49 @@ function analyzeRoute(tokens, dep, arr) {
         status,
         reasons,
         suggestions,
-        parsed: buildParsedSummary(tokens, dep, arr)
+        parsed: buildParsedSummary(tokens, dep, arr, region)
     };
+}
+
+function detectRegion(dep, arr, regionPref) {
+    const d = (dep || '').toUpperCase();
+    const a = (arr || '').toUpperCase();
+
+    const looksEurope = (c) => c.startsWith('E');
+    const looksUk = (c) => c.startsWith('EG');
+    const looksUsCanada = (c) => c.startsWith('K') || c.startsWith('C') || c.startsWith('P');
+
+    if (regionPref === 'uk-eu') {
+        return { family: 'europe', kind: 'europe', label: 'UK/Europe', ukInvolved: true };
+    }
+    if (regionPref === 'us') {
+        return { family: 'us', kind: 'us', label: 'US/Canada', ukInvolved: false };
+    }
+
+    const depEurope = d ? looksEurope(d) : false;
+    const arrEurope = a ? looksEurope(a) : false;
+    const depUk = d ? looksUk(d) : false;
+    const arrUk = a ? looksUk(a) : false;
+    const depUs = d ? looksUsCanada(d) : false;
+    const arrUs = a ? looksUsCanada(a) : false;
+
+    const ukInvolved = depUk || arrUk;
+
+    // Transatlantic heuristics: Europe <-> US/Canada
+    if ((depEurope && arrUs) || (arrEurope && depUs)) {
+        return { family: 'europe', kind: 'transatlantic', label: 'Transatlantic (Europe ↔ US/Canada)', ukInvolved };
+    }
+
+    if (depEurope || arrEurope) {
+        return { family: 'europe', kind: 'europe', label: ukInvolved ? 'UK/Europe' : 'Europe', ukInvolved };
+    }
+
+    if (depUs || arrUs) {
+        return { family: 'us', kind: 'us', label: 'US/Canada', ukInvolved: false };
+    }
+
+    // Unknown: default to Europe-ish strictness (VATSIM tends to reroute direct routes in controlled airspace)
+    return { family: 'europe', kind: 'unknown', label: 'Auto (default)', ukInvolved: false };
 }
 
 function classifyTokens(tokens) {
@@ -272,24 +385,30 @@ function classifyTokens(tokens) {
     return types;
 }
 
-function buildParsedSummary(tokens, dep, arr) {
+function buildParsedSummary(tokens, dep, arr, region) {
     const firstIcao = tokens.find((t) => validateIcaoCode(t)) || '';
     const lastIcao = [...tokens].reverse().find((t) => validateIcaoCode(t)) || '';
     const dctCount = tokens.filter((t) => t === 'DCT').length;
+    const airwayCount = tokens.filter((t) => /^(U|UL|UM|UN|UT|UZ|T|Q|J|V)\d{1,3}[A-Z]?$/.test(t)).length;
 
     const lines = [];
+    if (region?.label) lines.push(`Region: ${region.label}`);
     if (dep) lines.push(`Departure: ${dep}`);
     else if (firstIcao) lines.push(`Detected departure ICAO: ${firstIcao}`);
 
     if (arr) lines.push(`Arrival: ${arr}`);
     else if (lastIcao && lastIcao !== firstIcao) lines.push(`Detected arrival ICAO: ${lastIcao}`);
 
-    lines.push(`Tokens: ${tokens.length} (DCT: ${dctCount})`);
+    lines.push(`Tokens: ${tokens.length} (DCT: ${dctCount}, Airways: ${airwayCount})`);
 
     return lines.join('\n');
 }
 
 function makeCard(label, value) {
+    return makeCard(label, value, false);
+}
+
+function makeCard(label, value, mono) {
     const card = document.createElement('div');
     card.className = 'decode-item';
 
@@ -297,11 +416,94 @@ function makeCard(label, value) {
     strong.textContent = label;
 
     const p = document.createElement('p');
+    if (mono) p.className = 'mono';
     p.textContent = value;
 
     card.appendChild(strong);
     card.appendChild(p);
     return card;
+}
+
+function suggestBetterRoute(tokens, dep, arr, region) {
+    const notes = [];
+
+    // Clone
+    let t = Array.isArray(tokens) ? tokens.slice() : [];
+
+    // Remove obvious leading/trailing ICAOs if present (many vACCs prefer route without them)
+    if (dep && t[0] === dep) {
+        t = t.slice(1);
+        notes.push(`Removed leading departure ICAO (${dep}).`);
+    }
+    if (arr && t[t.length - 1] === arr) {
+        t = t.slice(0, -1);
+        notes.push(`Removed trailing arrival ICAO (${arr}).`);
+    }
+
+    // Remove runway/SID/STAR/procedure-ish tokens
+    const beforeLen = t.length;
+    t = t.filter((x) => {
+        if (!x) return false;
+        if (['SID', 'STAR', 'DEPARTURE', 'ARRIVAL'].includes(x)) return false;
+        if (/^RW\d{2}[LRC]?$/.test(x)) return false;
+        if (/^(SID|STAR)[A-Z0-9]+$/.test(x)) return false;
+        return true;
+    });
+    if (t.length !== beforeLen) {
+        notes.push('Removed runway/SID/STAR/procedure words from the route string.');
+    }
+
+    // Keep only the first speed/level token
+    let seenSL = false;
+    const pruned = [];
+    for (const x of t) {
+        if (/^[KN]\d{4}F\d{3}$/.test(x)) {
+            if (seenSL) continue;
+            seenSL = true;
+        }
+        pruned.push(x);
+    }
+    if (pruned.length !== t.length) {
+        notes.push('Kept only the first speed/level token (extra ones removed).');
+    }
+    t = pruned;
+
+    // Compress DCT usage: remove repeats, remove leading/trailing DCT
+    const compressed = [];
+    for (const x of t) {
+        if (x === 'DCT' && compressed[compressed.length - 1] === 'DCT') continue;
+        compressed.push(x);
+    }
+    t = compressed;
+    while (t[0] === 'DCT') t.shift();
+    while (t[t.length - 1] === 'DCT') t.pop();
+
+    // Europe/UK: if there are many DCTs, suggest removing some (cannot invent airways without a nav DB)
+    const dctCount = t.filter((x) => x === 'DCT').length;
+    if (region?.family === 'europe' && dctCount >= 3) {
+        notes.push('UK/Europe tends to prefer airway-structured routes; reduce DCT segments if you can.');
+    }
+    if (region?.family === 'us' && dctCount >= 6) {
+        notes.push('US often allows more DCT, but very high DCT usage can still be amended by ATC.');
+    }
+
+    // Transatlantic: don’t fabricate oceanic routing; add a note
+    const hasNAT = t.some((x) => /^NAT[A-Z\d]{1,2}$/.test(x));
+    const hasLatLon = t.some((x) => /^\d{2}[NS]\d{3}[EW]$/.test(x) || /^\d{4}[NS]\d{5}[EW]$/.test(x));
+    if (region?.kind === 'transatlantic' && !hasNAT && !hasLatLon) {
+        notes.push('Transatlantic flights usually need an oceanic segment (NAT track or published lat/long points). Add the correct oceanic routing for your direction/time.');
+    }
+
+    // If route becomes too short after cleanup, fall back to original
+    const meaningful = t.filter((x) => x !== 'DCT');
+    if (meaningful.length < 3) {
+        return {
+            route: tokens.join(' '),
+            notes: ['Route is too short to safely “improve” automatically; showing original.']
+        };
+    }
+
+    return { route: t.join(' '), notes };
 }
 
 function makeError(message) {
