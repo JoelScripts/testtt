@@ -269,32 +269,41 @@ function displayAtisResults(atisText, icaoCode) {
     const atisOutput = document.getElementById('atis-output');
     atisOutput.innerHTML = '';
     
-    // Create container for raw ATIS
-    const rawAtisDiv = document.createElement('div');
-    rawAtisDiv.className = 'raw-metar';
-    rawAtisDiv.textContent = `Raw ATIS: ${atisText}`;
-    atisOutput.appendChild(rawAtisDiv);
+    // Create collapsible container for raw ATIS
+    const rawDetails = document.createElement('details');
+    rawDetails.className = 'raw-details';
+    const rawSummary = document.createElement('summary');
+    rawSummary.textContent = 'Raw ATIS';
+    const rawContent = document.createElement('div');
+    rawContent.className = 'raw-metar';
+    rawContent.textContent = atisText;
+    rawDetails.appendChild(rawSummary);
+    rawDetails.appendChild(rawContent);
+    atisOutput.appendChild(rawDetails);
     
     // Decode ATIS information
     const decoded = decodeAtis(atisText, icaoCode);
     
-    // Display each decoded section
+    // Display decoded sections in a compact grid
+    const grid = document.createElement('div');
+    grid.className = 'decode-grid';
     Object.entries(decoded).forEach(([key, value]) => {
         if (value) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'decode-item';
-            
+
             const label = document.createElement('strong');
             label.textContent = key;
             itemDiv.appendChild(label);
-            
+
             const content = document.createElement('p');
             content.textContent = value;
             itemDiv.appendChild(content);
-            
-            atisOutput.appendChild(itemDiv);
+
+            grid.appendChild(itemDiv);
         }
     });
+    atisOutput.appendChild(grid);
 }
 
 // Decode ATIS text into human-readable format
@@ -657,6 +666,14 @@ function validateIcaoCode(code) {
     return icaoPattern.test(code);
 }
 
+function navigatePage() {
+    const select = document.getElementById('site-nav');
+    if (!select) return;
+    const target = select.value;
+    if (!target) return;
+    window.location.href = target;
+}
+
 function decodeMetar() {
     const input = document.getElementById('metar-input').value.trim();
     const resultSection = document.getElementById('result-section');
@@ -959,7 +976,12 @@ function decodeAltimeter(altStr) {
 function displayResults(decoded, rawMetar) {
     const output = document.getElementById('decoded-output');
     
-    let html = `<div class="raw-metar">Raw METAR: ${rawMetar}</div>`;
+    let html = `
+        <details class="raw-details">
+            <summary>Raw METAR</summary>
+            <div class="raw-metar">${rawMetar}</div>
+        </details>
+    `;
     
     const items = [
         { label: '📍 Station', value: decoded.station },
@@ -973,6 +995,7 @@ function displayResults(decoded, rawMetar) {
         { label: '📝 Remarks', value: decoded.remarks }
     ];
     
+    html += `<div class="decode-grid">`;
     items.forEach(item => {
         if (item.value) {
             html += `
@@ -983,6 +1006,7 @@ function displayResults(decoded, rawMetar) {
             `;
         }
     });
+    html += `</div>`;
     
     output.innerHTML = html;
 }

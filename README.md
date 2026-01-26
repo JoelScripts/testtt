@@ -10,6 +10,7 @@ Visit the live website: **https://joelscripts.github.io/testtt/**
 
 - **🆕 Automatic METAR Fetching**: Enter any airport ICAO code (e.g., KJFK, EGLL, KSFO) to automatically fetch and decode current weather data
 - **✈️ VATSIM ATIS Decoder**: Fetch and decode live ATIS from VATSIM network airports with active ATC (via the official VATSIM data feed)
+- **🛑 NOTAM Decoder (New)**: Fetch and decode current NOTAMs for an airport (with manual paste fallback if fetching is blocked)
 - **Input Validation**: Built-in validation ensures only valid 4-letter ICAO codes are submitted
 - **Easy-to-use interface**: Simply paste a METAR code and get instant human-readable translations
 - **Comprehensive decoding**: Decodes all major METAR components including:
@@ -48,6 +49,16 @@ Visit https://joelscripts.github.io/testtt/ to use the decoder immediately.
    - If ATC is active at that airport on VATSIM, the ATIS will be fetched and decoded
 5. The decoded information will display with clear icons and explanations
 
+### NOTAMs Page
+Use the navigation dropdown in the header to switch to the NOTAMs page.
+
+- **Fetch NOTAMs:** Enter an ICAO and click "Fetch NOTAMs"
+- **Manual Decode:** Paste one or more NOTAMs and click "Decode NOTAMs"
+
+### Notes on NOTAM Fetching
+NOTAM providers often require API keys or block cross-origin requests from browser apps.
+If fetching fails in your browser, use the manual paste box to decode NOTAM text.
+
 ### Note on API Access
 The automatic METAR fetching feature uses the public VATSIM METAR endpoint (CORS-friendly for browser apps like GitHub Pages). If automatic fetching doesn't work, you can still use the manual input method to decode METAR codes.
 
@@ -68,8 +79,10 @@ ATIS (Automatic Terminal Information Service) is a continuous broadcast of recor
 ## Files
 
 - `index.html` - Main HTML structure
+- `notams.html` - NOTAM fetch/decode page
 - `styles.css` - Styling and responsive design
 - `script.js` - METAR parsing and decoding logic
+- `notams.js` - NOTAM fetching and decoding logic
 - `.github/workflows/deploy.yml` - GitHub Pages deployment configuration
 
 ## Browser Compatibility

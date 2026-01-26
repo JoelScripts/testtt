@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOTAM Decoder - Current NOTAMs Made Easy</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>🛑 NOTAM Decoder</h1>
+                    <p class="subtitle">Fetch and decode current NOTAMs into plain English</p>
+                </div>
+                <div class="nav-controls">
+                    <label class="nav-label" for="site-nav">Navigate:</label>
+                    <select id="site-nav" class="nav-select" aria-label="Site navigation">
+                        <option value="index.html">METAR / VATSIM ATIS</option>
+                        <option value="notams.html" selected>NOTAMs</option>
+                    </select>
+                    <button class="nav-btn" type="button" onclick="navigatePage()">Go</button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <label for="notam-icao-input">Get Current NOTAMs for Airport ICAO:</label>
+                <div class="icao-input-group">
+                    <input
+                        type="text"
+                        id="notam-icao-input"
+                        placeholder="e.g., EGCC, KJFK"
+                        maxlength="4"
+                        pattern="[A-Za-z0-9]{4}"
+                    />
+                    <button id="fetch-notams-btn" onclick="fetchNotams()">Fetch NOTAMs</button>
+                </div>
+                <p class="input-hint">If fetching fails (API/CORS), paste NOTAMs manually below and decode.</p>
+            </div>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+            <div class="input-section">
+                <label for="notam-input">Paste NOTAM(s) to Decode:</label>
+                <textarea
+                    id="notam-input"
+                    placeholder="Paste NOTAMs here (FAA ! format, ICAO Q) format, or plain text)"
+                    rows="6"
+                ></textarea>
+                <button id="decode-notams-btn" onclick="decodeNotamsFromInput()">Decode NOTAMs</button>
+            </div>
+
+            <div id="notam-result-section" class="result-section" style="display: none;">
+                <h2>Decoded NOTAMs</h2>
+                <div id="notam-output"></div>
+            </div>
+
+            <div class="info-section">
+                <h3>About NOTAMs</h3>
+                <p>
+                    NOTAMs (Notices to Air Missions) publish time-critical aeronautical information such as
+                    runway closures, nav aid outages, and procedure changes.
+                </p>
+                <p>
+                    This tool tries to fetch current NOTAMs, and can also decode pasted NOTAM text.
+                </p>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2026 METAR Decoder | For educational purposes</p>
+        </footer>
+    </div>
+
+    <script src="notams.js"></script>
+</body>
+</html>

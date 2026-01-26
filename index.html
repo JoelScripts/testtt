@@ -9,8 +9,20 @@
 <body>
     <div class="container">
         <header>
-            <h1>✈️ METAR Decoder</h1>
-            <p class="subtitle">Decode aviation weather reports into plain English</p>
+            <div class="header-row">
+                <div>
+                    <h1>✈️ METAR Decoder</h1>
+                    <p class="subtitle">Decode aviation weather reports into plain English</p>
+                </div>
+                <div class="nav-controls">
+                    <label class="nav-label" for="site-nav">Navigate:</label>
+                    <select id="site-nav" class="nav-select" aria-label="Site navigation">
+                        <option value="index.html" selected>METAR / VATSIM ATIS</option>
+                        <option value="notams.html">NOTAMs</option>
+                    </select>
+                    <button class="nav-btn" type="button" onclick="navigatePage()">Go</button>
+                </div>
+            </div>
         </header>
 
         <main>

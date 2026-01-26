@@ -28,6 +28,53 @@ header {
     text-align: center;
 }
 
+.header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.nav-label {
+    font-weight: bold;
+    opacity: 0.95;
+}
+
+.nav-select {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    outline: none;
+}
+
+.nav-select option {
+    color: #2d3748;
+}
+
+.nav-btn {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
 header h1 {
     font-size: 2.5em;
     margin-bottom: 10px;
@@ -147,6 +194,91 @@ main {
 #atis-icao-input:focus {
     outline: none;
     border-color: #4299e1;
+}
+
+/* NOTAM page controls (match METAR/ATIS styling) */
+#notam-icao-input {
+    flex: 1;
+    padding: 15px;
+    font-size: 1em;
+    border: 2px solid #cbd5e0;
+    border-radius: 8px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    transition: border-color 0.3s;
+}
+
+#notam-icao-input:focus {
+    outline: none;
+    border-color: #e53e3e;
+}
+
+#fetch-notams-btn {
+    padding: 15px 25px;
+    font-size: 1em;
+    font-weight: bold;
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+
+#fetch-notams-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(229, 62, 62, 0.35);
+}
+
+#fetch-notams-btn:active {
+    transform: translateY(0);
+}
+
+#fetch-notams-btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#notam-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 1em;
+    border: 2px solid #cbd5e0;
+    border-radius: 8px;
+    resize: vertical;
+    font-family: 'Courier New', monospace;
+    transition: border-color 0.3s;
+}
+
+#notam-input:focus {
+    outline: none;
+    border-color: #e53e3e;
+}
+
+#decode-notams-btn {
+    width: 100%;
+    padding: 15px;
+    margin-top: 15px;
+    font-size: 1.1em;
+    font-weight: bold;
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#decode-notams-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(221, 107, 32, 0.35);
+}
+
+#decode-notams-btn:active {
+    transform: translateY(0);
 }
 
 .input-hint {
@@ -272,8 +404,7 @@ main {
 }
 
 .decode-item {
-    margin-bottom: 20px;
-    padding: 15px;
+    padding: 12px;
     background: white;
     border-radius: 6px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -283,7 +414,7 @@ main {
     display: block;
     color: #667eea;
     font-size: 1.1em;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .decode-item p {
@@ -298,7 +429,39 @@ main {
     border-radius: 6px;
     font-family: 'Courier New', monospace;
     word-break: break-all;
-    margin-bottom: 20px;
+    margin-bottom: 0;
+}
+
+.decode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.raw-details {
+    margin-bottom: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.raw-details summary {
+    cursor: pointer;
+    user-select: none;
+    padding: 10px 12px;
+    background: #1a202c;
+    color: #e2e8f0;
+    font-weight: bold;
+    border-radius: 6px;
+}
+
+.raw-details[open] summary {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.raw-details[open] .raw-metar {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
 }
 
 .info-section {
@@ -348,6 +511,18 @@ footer {
 
 
 @media (max-width: 768px) {
+        .header-row {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .nav-controls {
+            width: 100%;
+        }
+
+        .nav-select {
+            width: min(420px, 100%);
+        }
     header h1 {
         font-size: 2em;
     }
