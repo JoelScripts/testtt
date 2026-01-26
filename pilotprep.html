@@ -1,5 +1,14 @@
                 <!-- Weather Impact & METAR/TAF Decode card fully removed as requested -->
                 <!-- All advanced feature cards removed as requested -->
+                <div class="pilotprep-card">
+                    <div class="pilotprep-section-title">Runway Landing Suggestion</div>
+                    <div class="tool-section">
+                        <p>Suggests the best runway for landing based on current winds and weather.</p>
+                        <input id="runway-icao" type="text" maxlength="4" placeholder="Airport ICAO (e.g., EGLL)" />
+                        <button class="primary-btn" type="button" onclick="suggestLandingRunway()">Suggest Runway</button>
+                        <div id="runway-suggestion-output"></div>
+                    </div>
+                </div>
 </main>
 <script>
 window.exportBriefPDF = function exportBriefPDF() {

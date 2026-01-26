@@ -58,6 +58,16 @@
             </div>
 
             <div class="examples">
+
+                            <div class="pilotprep-card">
+                                <div class="pilotprep-section-title">Runway Landing Suggestion</div>
+                                <div class="tool-section">
+                                    <p>Suggests the best runway for landing based on current winds and weather.</p>
+                                    <input id="runway-icao" type="text" maxlength="4" placeholder="Airport ICAO (e.g., EGLL)" />
+                                    <button class="primary-btn" type="button" onclick="suggestLandingRunway()">Suggest Runway</button>
+                                    <div id="runway-suggestion-output"></div>
+                                </div>
+                            </div>
                 <p><strong>Quick Examples:</strong></p>
                 <button class="example-btn" onclick="loadExample('KJFK 121251Z 24016G28KT 10SM FEW250 23/14 A3012')">JFK Airport</button>
                 <button class="example-btn" onclick="loadExample('EGLL 121250Z 27015KT 9999 FEW035 17/12 Q1013')">London Heathrow</button>

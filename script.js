@@ -1051,3 +1051,55 @@ document.addEventListener('DOMContentLoaded', function() {
         e.target.value = e.target.value.toUpperCase();
     });
 });
+
+// --- Runway Landing Suggestion ---
+window.suggestLandingRunway = function suggestLandingRunway() {
+    const icao = (document.getElementById('runway-icao')?.value || '').trim().toUpperCase();
+    const output = document.getElementById('runway-suggestion-output');
+    output.innerHTML = '';
+    if (!icao || icao.length !== 4) {
+        output.textContent = 'Please enter a valid 4-letter ICAO code.';
+        return;
+    }
+    // Try to use the decoded METAR from the main decoder if available
+    let metarText = '';
+    if (document.getElementById('metar-input') && document.getElementById('metar-input').value.trim()) {
+        metarText = document.getElementById('metar-input').value.trim();
+    } else {
+        output.textContent = 'Please fetch or enter a METAR first.';
+        return;
+    }
+    // Parse wind info from METAR string
+    const windMatch = metarText.match(/(\d{3}|VRB)(\d{2,3})(G\d{2,3})?KT/);
+    if (!windMatch) {
+        output.textContent = 'Could not find wind info in METAR.';
+        return;
+    }
+    let windDir = windMatch[1] === 'VRB' ? null : parseInt(windMatch[1]);
+    let windSpd = parseInt(windMatch[2]);
+    // Example: hardcoded runways for demo; in production, fetch real runways from an API
+    const runways = [
+        { id: '09', heading: 90 },
+        { id: '27', heading: 270 },
+        { id: '05', heading: 50 },
+        { id: '23', heading: 230 }
+    ];
+    let bestRunway = null;
+    let bestHeadwind = -Infinity;
+    let details = '';
+    runways.forEach(rwy => {
+        let headwind = 0;
+        if (windDir !== null) {
+            const angle = Math.abs(windDir - rwy.heading);
+            headwind = Math.round(windSpd * Math.cos(angle * Math.PI / 180));
+        } else {
+            headwind = 0; // VRB wind, can't calculate
+        }
+        details += `Runway ${rwy.id}: headwind ${headwind}kt<br>`;
+        if (headwind > bestHeadwind) {
+            bestHeadwind = headwind;
+            bestRunway = rwy.id;
+        }
+    });
+    output.innerHTML = `<strong>Suggested Runway:</strong> ${bestRunway}<br><small>${details}</small>`;
+};
