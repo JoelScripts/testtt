@@ -2,6 +2,10 @@
 
 A user-friendly website that decodes METAR (Meteorological Aerodrome Report) codes and makes aviation weather reports easier to understand.
 
+## 🌐 Live Demo
+
+Visit the live website: **https://joelscripts.github.io/testtt/**
+
 ## Features
 
 - **Easy-to-use interface**: Simply paste a METAR code and get instant human-readable translations
@@ -20,6 +24,10 @@ A user-friendly website that decodes METAR (Meteorological Aerodrome Report) cod
 
 ## How to Use
 
+### Online
+Visit https://joelscripts.github.io/testtt/ to use the decoder immediately.
+
+### Locally
 1. Open `index.html` in a web browser
 2. Enter a METAR code in the text area, or click one of the example buttons
 3. Click "Decode METAR" to see the human-readable translation
@@ -40,6 +48,7 @@ METAR is a standardized format for reporting weather information used in aviatio
 - `index.html` - Main HTML structure
 - `styles.css` - Styling and responsive design
 - `script.js` - METAR parsing and decoding logic
+- `.github/workflows/deploy.yml` - GitHub Pages deployment configuration
 
 ## Browser Compatibility
 
@@ -52,3 +61,7 @@ Works in all modern browsers:
 ## License
 
 For educational purposes.
+
+## Deployment
+
+This website is automatically deployed to GitHub Pages when changes are pushed to the main branch. The deployment workflow is configured in `.github/workflows/deploy.yml`.
