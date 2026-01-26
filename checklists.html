@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Checklists</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>📝 Aircraft Checklists</h1>
+                    <p class="subtitle">Quick reference for popular aircraft</p>
+                </div>
+                <div class="nav-controls">
+                    <label class="nav-label" for="site-nav">Navigate:</label>
+                    <select id="site-nav" class="nav-select" aria-label="Site navigation" onchange="navigatePage()">
+                        <option value="index.html">METAR / VATSIM ATIS</option>
+                        <option value="notams.html">NOTAMs</option>
+                        <option value="routecheck.html">Route Checker</option>
+                        <option value="pilotprep.html">Pilot Prep</option>
+                        <option value="checklists.html" selected>Aircraft Checklists</option>
+                    </select>
+                    <button class="nav-btn" type="button" onclick="navigatePage()">Go</button>
+                </div>
+            </div>
+        </header>
+        <main>
+            <div class="pilotprep-card" style="max-width:600px;margin:32px auto;">
+                <div class="pilotprep-section-title">Select Aircraft</div>
+                <div class="tool-section">
+                    <select id="aircraft-select" style="width:100%;padding:10px 8px;font-size:1.1em;">
+                        <option value="a320">Airbus A320</option>
+                        <option value="b738">Boeing 737-800</option>
+                        <option value="c172">Cessna 172</option>
+                        <option value="b747">Boeing 747-400</option>
+                        <option value="sr22">Cirrus SR22</option>
+                    </select>
+                </div>
+            </div>
+            <div class="pilotprep-card" style="max-width:600px;margin:32px auto;">
+                <div class="pilotprep-section-title">Checklist</div>
+                <div class="tool-section" id="checklist-output">
+                    <!-- Checklist will appear here -->
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+    function navigatePage() {
+        const nav = document.getElementById('site-nav');
+        window.location.href = nav.value;
+    }
+    const checklists = {
+        a320: [
+            { phase: 'Preflight', items: [
+                'Aircraft Documents – CHECKED',
+                'Parking Brake – ON',
+                'Chocks – IN PLACE',
+                'Gear Pins & Covers – REMOVED',
+                'Oxygen – CHECKED',
+                'Flight Deck Preparation – COMPLETE',
+                'Circuit Breakers – CHECKED',
+                'Emergency Equipment – CHECKED',
+                'Fuel Quantity – CHECKED',
+                'Weather & NOTAMs – REVIEWED',
+                'FMS/MCDU – SET',
+                'Takeoff Data – SET',
+                'Departure Briefing – COMPLETE'
+            ]},
+            { phase: 'Before Start', items: [
+                'Doors – CLOSED',
+                'Beacon – ON',
+                'Fuel Pumps – ON',
+                'APU – AS REQUIRED',
+                'Pushback Clearance – OBTAINED',
+                'Windows – CLOSED & LOCKED',
+                'Transponder – AUTO/ON'
+            ]},
+            { phase: 'Engine Start', items: [
+                'Engine Mode Selector – IGN/START',
+                'Engine Master – ON',
+                'Engine Parameters – MONITOR',
+                'After Start – APU BLEED OFF, PACKS ON'
+            ]},
+            { phase: 'Taxi', items: [
+                'Flight Controls – CHECK',
+                'Brakes – CHECK',
+                'Nose Light – ON',
+                'Taxi Clearance – OBTAINED',
+                'Flight Instruments – CHECKED'
+            ]},
+            { phase: 'Before Takeoff', items: [
+                'Flight Controls – CHECKED',
+                'Flaps – SET',
+                'Spoilers – ARMED',
+                'Trim – SET',
+                'Cabin – READY',
+                'Takeoff Briefing – CONFIRMED',
+                'Exterior Lights – AS REQUIRED'
+            ]},
+            { phase: 'After Takeoff', items: [
+                'Landing Gear – UP',
+                'Flaps – RETRACTED',
+                'Climb Thrust – SET',
+                'APU – OFF',
+                'Exterior Lights – AS REQUIRED'
+            ]},
+            { phase: 'Approach', items: [
+                'Briefing – COMPLETE',
+                'MCDU – SET',
+                'Altimeters – SET',
+                'Approach Phase – ACTIVATED',
+                'Seat Belts – ON'
+            ]},
+            { phase: 'Landing', items: [
+                'Gear – DOWN',
+                'Flaps – SET',
+                'Spoilers – ARMED',
+                'Autobrake – SET',
+                'Cabin – ADVISED',
+                'Exterior Lights – ON'
+            ]},
+            { phase: 'Shutdown', items: [
+                'Parking Brake – ON',
+                'Engines – OFF',
+                'Beacon – OFF',
+                'Fuel Pumps – OFF',
+                'APU – AS REQUIRED',
+                'Seat Belts – OFF',
+                'IRS – OFF',
+                'Postflight – COMPLETE'
+            ]}
+        ],
+        b738: [
+            { phase: 'Preflight', items: [
+                'Aircraft Documents – CHECKED',
+                'Parking Brake – SET',
+                'Chocks – IN PLACE',
+                'Gear Pins & Covers – REMOVED',
+                'Oxygen – CHECKED',
+                'Flight Deck Preparation – COMPLETE',
+                'Circuit Breakers – CHECKED',
+                'Emergency Equipment – CHECKED',
+                'Fuel Quantity – CHECKED',
+                'Weather & NOTAMs – REVIEWED',
+                'FMC – SET',
+                'Takeoff Data – SET',
+                'Departure Briefing – COMPLETE'
+            ]},
+            { phase: 'Before Start', items: [
+                'Doors – CLOSED',
+                'Beacon – ON',
+                'Fuel Pumps – ON',
+                'Hydraulic Panel – SET',
+                'APU – AS REQUIRED',
+                'Pushback Clearance – OBTAINED',
+                'Windows – CLOSED & LOCKED',
+                'Transponder – AUTO/ON'
+            ]},
+            { phase: 'Engine Start', items: [
+                'Packs – OFF',
+                'Engine Start Switch – GND',
+                'Engine Start Lever – IDLE',
+                'Engine Parameters – MONITOR',
+                'After Start – Packs ON, APU OFF'
+            ]},
+            { phase: 'Taxi', items: [
+                'Flight Controls – CHECK',
+                'Brakes – CHECK',
+                'Nose Light – ON',
+                'Taxi Clearance – OBTAINED',
+                'Flight Instruments – CHECKED'
+            ]},
+            { phase: 'Before Takeoff', items: [
+                'Flight Controls – CHECKED',
+                'Flaps – SET',
+                'Stab Trim – SET',
+                'Cabin – READY',
+                'Takeoff Briefing – CONFIRMED',
+                'Exterior Lights – AS REQUIRED'
+            ]},
+            { phase: 'After Takeoff', items: [
+                'Landing Gear – UP',
+                'Flaps – RETRACTED',
+                'Climb Thrust – SET',
+                'APU – OFF',
+                'Exterior Lights – AS REQUIRED'
+            ]},
+            { phase: 'Approach', items: [
+                'Briefing – COMPLETE',
+                'FMC – SET',
+                'Altimeters – SET',
+                'Approach Checklist – COMPLETE',
+                'Seat Belts – ON'
+            ]},
+            { phase: 'Landing', items: [
+                'Gear – DOWN',
+                'Flaps – SET',
+                'Speedbrake – ARMED',
+                'Autobrake – SET',
+                'Cabin – ADVISED',
+                'Exterior Lights – ON'
+            ]},
+            { phase: 'Shutdown', items: [
+                'Parking Brake – ON',
+                'Engines – OFF',
+                'Beacon – OFF',
+                'Fuel Pumps – OFF',
+                'APU – AS REQUIRED',
+                'Seat Belts – OFF',
+                'IRS – OFF',
+                'Postflight – COMPLETE'
+            ]}
+        ],
+        c172: [
+            { phase: 'Preflight', items: [
+                'Aircraft Documents – ON BOARD',
+                'Parking Brake – SET',
+                'Control Lock – REMOVE',
+                'Fuel Quantity – CHECK',
+                'Preflight Inspection – COMPLETE',
+                'Weight & Balance – CHECKED',
+                'Weather & NOTAMs – REVIEWED',
+                'Flight Plan – FILED'
+            ]},
+            { phase: 'Engine Start', items: [
+                'Brakes – HOLD',
+                'Mixture – RICH',
+                'Throttle – OPEN 1/4 INCH',
+                'Prop Area – CLEAR',
+                'Starter – ENGAGE',
+                'Oil Pressure – CHECK',
+                'Avionics – ON'
+            ]},
+            { phase: 'Taxi', items: [
+                'Brakes – CHECK',
+                'Flight Instruments – CHECK',
+                'Heading Indicator – SET',
+                'Turn Coordinator – CHECK',
+                'Taxi Clearance – OBTAINED'
+            ]},
+            { phase: 'Before Takeoff', items: [
+                'Flight Controls – FREE & CORRECT',
+                'Instruments – CHECK',
+                'Flaps – SET',
+                'Doors/Windows – CLOSED',
+                'Takeoff Briefing – COMPLETE'
+            ]},
+            { phase: 'After Takeoff', items: [
+                'Flaps – UP',
+                'Climb Power – SET',
+                'Engine Instruments – CHECK',
+                'Landing Light – OFF (as required)'
+            ]},
+            { phase: 'Approach', items: [
+                'Seat Belts – FASTENED',
+                'Mixture – RICH',
+                'Carb Heat – ON',
+                'Flaps – AS REQUIRED',
+                'Landing Light – ON'
+            ]},
+            { phase: 'Landing', items: [
+                'Airspeed – 65 KIAS',
+                'Flaps – AS REQUIRED',
+                'Touchdown – MAIN WHEELS FIRST',
+                'Braking – AS REQUIRED'
+            ]},
+            { phase: 'Shutdown', items: [
+                'Parking Brake – SET',
+                'Avionics – OFF',
+                'Mixture – IDLE CUTOFF',
+                'Ignition – OFF',
+                'Master Switch – OFF',
+                'Control Lock – INSTALL'
+            ]}
+        ]
+    };
+    function renderChecklist(type) {
+        const out = document.getElementById('checklist-output');
+        out.innerHTML = '';
+        if (!checklists[type]) return;
+        checklists[type].forEach(section => {
+            const phase = document.createElement('h3');
+            phase.textContent = section.phase;
+            phase.style.margin = '18px 0 8px 0';
+            phase.style.fontSize = '1.1em';
+            phase.style.color = '#7c3aed';
+            phase.style.fontWeight = 'bold';
+            out.appendChild(phase);
+            const ul = document.createElement('ul');
+            ul.style.marginBottom = '12px';
+            ul.style.paddingLeft = '22px';
+            section.items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                li.style.marginBottom = '4px';
+                li.style.fontSize = '1.04em';
+                ul.appendChild(li);
+            });
+            out.appendChild(ul);
+        });
+    }
+    document.getElementById('aircraft-select').addEventListener('change', function(e) {
+        renderChecklist(e.target.value);
+    });
+    renderChecklist(document.getElementById('aircraft-select').value);
+    </script>
+</body>
+</html>

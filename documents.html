@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Documents</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>📄 Aircraft Documents</h1>
+                    <p class="subtitle">Reference library for essential aircraft documents</p>
+                </div>
+                <div class="nav-controls">
+                    <label class="nav-label" for="site-nav">Navigate:</label>
+                    <select id="site-nav" class="nav-select" aria-label="Site navigation" onchange="navigatePage()">
+                        <option value="index.html">METAR / VATSIM ATIS</option>
+                        <option value="notams.html">NOTAMs</option>
+                        <option value="routecheck.html">Route Checker</option>
+                        <option value="pilotprep.html">Pilot Prep</option>
+                        <option value="checklists.html">Aircraft Checklists</option>
+                        <option value="documents.html" selected>Aircraft Documents</option>
+                    </select>
+                    <button class="nav-btn" type="button" onclick="navigatePage()">Go</button>
+                </div>
+            </div>
+        </header>
+        <main>
+            <div class="pilotprep-card" style="max-width:700px;margin:32px auto;">
+                <div class="pilotprep-section-title">Available Documents</div>
+                <div class="tool-section" id="documents-list">
+                    <ul style="font-size:1.08em;line-height:1.7;">
+                        <li><strong>Airworthiness Certificate</strong> – Proof the aircraft is certified for flight.</li>
+                        <li><strong>Registration Certificate</strong> – Legal proof of aircraft ownership.</li>
+                        <li><strong>Radio License</strong> – Required for international operations.</li>
+                        <li><strong>Operating Handbook (POH/AFM)</strong> – Official aircraft manual.</li>
+                        <li><strong>Weight & Balance Data</strong> – Current aircraft weight and balance sheet.</li>
+                        <li><strong>Insurance Certificate</strong> – Proof of valid insurance.</li>
+                        <li><strong>Journey Logbook</strong> – Record of aircraft flights and maintenance.</li>
+                        <li><strong>Minimum Equipment List (MEL)</strong> – List of equipment allowed to be inoperative.</li>
+                        <li><strong>Noise Certificate</strong> – For certain international operations.</li>
+                        <li><strong>Other Required Docs</strong> – As per local regulations or operator.</li>
+                    </ul>
+                    <p style="margin-top:18px;color:#5a4b81;font-size:0.98em;">Note: Always check your country and operator's requirements for mandatory documents before flight.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+    function navigatePage() {
+        const nav = document.getElementById('site-nav');
+        window.location.href = nav.value;
+    }
+    </script>
+</body>
+</html>
