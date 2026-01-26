@@ -299,126 +299,355 @@ function displayAtisResults(atisText, icaoCode) {
 
 // Decode ATIS text into human-readable format
 function decodeAtis(atisText, icaoCode) {
+    const normalized = (atisText || '').replace(/\s+/g, ' ').trim();
+    const upper = normalized.toUpperCase();
+
     const decoded = {
         '🏢 Airport': icaoCode,
         '📻 Information': '',
         '🕐 Time': '',
         '🛬 Runway(s)': '',
+        '🧭 Transition Level': '',
         '💨 Wind': '',
         '👁️ Visibility': '',
-        '🌡️ Temperature': '',
-        '🌡️ Dewpoint': '',
-        '📊 Altimeter/QNH': '',
+        '🌦️ Weather': '',
         '☁️ Sky Condition': '',
+        '🌡️ Temperature': '',
+        '💧 Dewpoint': '',
+        '📊 Altimeter/QNH': '',
+        '📈 Trend': '',
         '📝 Remarks': ''
     };
-    
+
     // NATO phonetic alphabet for information letter matching
-    const natoPhonetic = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'GOLF', 'HOTEL', 
-                          'INDIA', 'JULIET', 'KILO', 'LIMA', 'MIKE', 'NOVEMBER', 'OSCAR', 'PAPA', 
-                          'QUEBEC', 'ROMEO', 'SIERRA', 'TANGO', 'UNIFORM', 'VICTOR', 'WHISKEY', 
-                          'XRAY', 'YANKEE', 'ZULU'];
-    
+    const natoPhonetic = [
+        'ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'GOLF', 'HOTEL',
+        'INDIA', 'JULIET', 'KILO', 'LIMA', 'MIKE', 'NOVEMBER', 'OSCAR', 'PAPA',
+        'QUEBEC', 'ROMEO', 'SIERRA', 'TANGO', 'UNIFORM', 'VICTOR', 'WHISKEY',
+        'XRAY', 'YANKEE', 'ZULU'
+    ];
+
     // Extract information letter (e.g., "INFORMATION A", "ATIS BRAVO")
     const infoPattern = new RegExp(`(?:INFORMATION|ATIS)\\s+([A-Z]|${natoPhonetic.join('|')})`, 'i');
-    const infoMatch = atisText.match(infoPattern);
+    const infoMatch = normalized.match(infoPattern);
     if (infoMatch) {
         decoded['📻 Information'] = `Information ${infoMatch[1].toUpperCase()}`;
     }
-    
-    // Extract time
-    const timeMatch = atisText.match(/(\d{4})\s*(?:ZULU|UTC|Z)/i);
+
+    // Extract time (often "TIME 1450Z" or "1450Z")
+    const timeMatch = normalized.match(/(?:TIME\s*)?(\d{4})\s*(?:ZULU|UTC|Z)\b/i);
     if (timeMatch) {
         const timeStr = timeMatch[1];
-        const hour = timeStr.substring(0, 2);
-        const minute = timeStr.substring(2, 4);
-        decoded['🕐 Time'] = `${hour}:${minute} UTC`;
+        decoded['🕐 Time'] = `${timeStr.substring(0, 2)}:${timeStr.substring(2, 4)} UTC`;
     }
-    
-    // Extract runway information - match common patterns
-    const runwayKeywords = /(?:RUNWAY|LANDING|DEPARTING|EXPECT|RUNWAYS?)\s+(?:RUNWAY\s+)?/i;
-    const runwayNumbers = /([0-9]{1,2}[LRC]?(?:\s+(?:AND|&|,)\s+[0-9]{1,2}[LRC]?)*)/i;
-    const runwayPattern = new RegExp(runwayKeywords.source + runwayNumbers.source, 'i');
-    const runwayMatch = atisText.match(runwayPattern);
-    if (runwayMatch) {
-        decoded['🛬 Runway(s)'] = `Runway ${runwayMatch[1]}`;
+
+    // Extract runway(s) (handles: "RUNWAY IN USE RWY 05L", "RWY 27 AND 27R", "ARRIVAL RUNWAY 09")
+    const arrivalRunways = extractRunwaysByContext(upper, /(ARRIVAL|LANDING|LDG)/);
+    const departureRunways = extractRunwaysByContext(upper, /(DEPARTURE|DEPARTING|DEP|TAKEOFF|TKOF)/);
+    const inUseRunways = extractRunwaysByContext(upper, /(IN\s+USE|ACTIVE)/);
+    const anyRunways = extractAnyRunways(upper);
+
+    const runwayText = buildRunwaySummary(arrivalRunways, departureRunways, inUseRunways, anyRunways);
+    if (runwayText) decoded['🛬 Runway(s)'] = runwayText;
+
+    // Transition Level
+    const tlMatch = normalized.match(/\bTRANSITION\s+LEVEL\s+(\d{1,3})\b/i) || normalized.match(/\bTL\s*(\d{1,3})\b/i);
+    if (tlMatch) {
+        decoded['🧭 Transition Level'] = `FL${String(tlMatch[1]).padStart(2, '0')}`;
     }
-    
-    // Extract wind information
-    const windMatch = atisText.match(/WIND\s+(\d{3})(?:\s+(?:AT|DEGREES AT))?\s+(\d{1,3})(?:\s+(?:GUSTING|GUST|G)\s+(\d{1,3}))?\s*(?:KNOTS?|KTS?|KT)/i);
-    if (windMatch) {
-        let windStr = `Wind from ${windMatch[1]}° at ${windMatch[2]} knots`;
-        if (windMatch[3]) {
-            windStr += `, gusting to ${windMatch[3]} knots`;
-        }
-        decoded['💨 Wind'] = windStr;
-    } else if (atisText.match(/WIND\s+CALM/i)) {
-        decoded['💨 Wind'] = 'Wind calm';
-    } else if (atisText.match(/WIND\s+VARIABLE/i)) {
-        const varWindMatch = atisText.match(/VARIABLE\s+(?:AT\s+)?(\d{1,3})\s*(?:KNOTS?|KTS?|KT)/i);
-        if (varWindMatch) {
-            decoded['💨 Wind'] = `Variable wind at ${varWindMatch[1]} knots`;
-        }
-    }
-    
-    // Extract visibility
-    const visMatch = atisText.match(/VISIBILITY\s+(\d+)(?:\s+(?:STATUTE\s+)?MILES?|SM)?/i);
-    if (visMatch) {
-        decoded['👁️ Visibility'] = `${visMatch[1]} statute miles`;
-    } else if (atisText.match(/VISIBILITY\s+(?:ONE\s+ZERO|10)\s*(?:KILOMETERS?|KM)/i)) {
-        decoded['👁️ Visibility'] = '10 kilometers or more';
-    }
-    
-    // Extract temperature
-    const tempPattern = /TEMPERATURE\s+((?:MINUS\s+)?)(\d{1,2})/i;
-    const tempMatch = atisText.match(tempPattern);
-    if (tempMatch) {
-        const isMinus = tempMatch[1].trim() !== '';
-        const tempC = isMinus ? -parseInt(tempMatch[2]) : parseInt(tempMatch[2]);
-        const tempF = Math.round((tempC * 9/5) + 32);
-        decoded['🌡️ Temperature'] = `${tempC}°C (${tempF}°F)`;
-    }
-    
-    // Extract dewpoint
-    const dewPattern = /(?:DEWPOINT|DEW\s+POINT)\s+((?:MINUS\s+)?)(\d{1,2})/i;
-    const dewMatch = atisText.match(dewPattern);
-    if (dewMatch) {
-        const isMinus = dewMatch[1].trim() !== '';
-        const dewC = isMinus ? -parseInt(dewMatch[2]) : parseInt(dewMatch[2]);
-        const dewF = Math.round((dewC * 9/5) + 32);
-        decoded['🌡️ Dewpoint'] = `${dewC}°C (${dewF}°F)`;
-    }
-    
-    // Extract altimeter
-    const altMatch = atisText.match(/ALTIMETER\s+(\d{2})\.?(\d{2})/i);
-    if (altMatch) {
-        decoded['📊 Altimeter/QNH'] = `${altMatch[1]}.${altMatch[2]} inches of mercury`;
-    } else {
-        const qnhMatch = atisText.match(/QNH\s+(\d{4})/i);
-        if (qnhMatch) {
-            decoded['📊 Altimeter/QNH'] = `${qnhMatch[1]} hectopascals`;
+
+    // Parse METAR-like weather tokens embedded in ATIS
+    const tokens = tokenizeAtisToTokens(upper);
+    const metarBits = parseMetarLikeBits(tokens);
+
+    if (metarBits.wind) decoded['💨 Wind'] = metarBits.wind;
+    if (metarBits.visibility) decoded['👁️ Visibility'] = metarBits.visibility;
+    if (metarBits.weather) decoded['🌦️ Weather'] = metarBits.weather;
+    if (metarBits.clouds) decoded['☁️ Sky Condition'] = metarBits.clouds;
+    if (metarBits.temperature) decoded['🌡️ Temperature'] = metarBits.temperature;
+    if (metarBits.dewpoint) decoded['💧 Dewpoint'] = metarBits.dewpoint;
+    if (metarBits.altimeter) decoded['📊 Altimeter/QNH'] = metarBits.altimeter;
+    if (metarBits.trend) decoded['📈 Trend'] = metarBits.trend;
+
+    // If we didn't find weather via tokens, fall back to phrase-based visibility/wind/clouds.
+    if (!decoded['💨 Wind']) {
+        const windPhrase = normalized.match(/\bWIND\s+(CALM|VARIABLE)\b/i);
+        if (windPhrase && /CALM/i.test(windPhrase[1])) decoded['💨 Wind'] = 'Wind calm';
+        if (windPhrase && /VARIABLE/i.test(windPhrase[1])) {
+            const v = normalized.match(/\bWIND\s+VARIABLE\s+(?:AT\s+)?(\d{1,3})\s*(?:KNOTS?|KTS?|KT)\b/i);
+            if (v) decoded['💨 Wind'] = `Variable wind at ${v[1]} knots`;
         }
     }
-    
-    // Extract sky condition
-    const clearSkyPattern = /(?:SKY|CEILING)\s+CLEAR|\bCLEAR\b/i;
-    if (atisText.match(clearSkyPattern)) {
-        decoded['☁️ Sky Condition'] = 'Clear skies';
-    } else {
-        const skyMatch = atisText.match(/(?:FEW|SCATTERED|BROKEN|OVERCAST)(?:\s+(?:AT\s+)?(\d+))?/i);
-        if (skyMatch) {
-            decoded['☁️ Sky Condition'] = skyMatch[0];
+    if (!decoded['👁️ Visibility']) {
+        const visMatch = normalized.match(/\bVISIBILITY\s+(\d+)(?:\s+(?:STATUTE\s+)?MILES?|SM)?\b/i);
+        if (visMatch) decoded['👁️ Visibility'] = `${visMatch[1]} statute miles`;
+        else if (normalized.match(/\bVISIBILITY\s+(?:ONE\s+ZERO|10)\s*(?:KILOMETERS?|KM)\b/i)) {
+            decoded['👁️ Visibility'] = '10 kilometers or more';
         }
     }
-    
-    // Extract remarks/additional info - match until end of string or uppercase word pattern
-    const remarksPattern = /(?:REMARKS|ADVISE|NOTICE|NOTAM)[\s:]+(.+)/i;
-    const remarksMatch = atisText.match(remarksPattern);
-    if (remarksMatch) {
-        decoded['📝 Remarks'] = remarksMatch[1].trim();
-    }
-    
+
+    // Remarks: show remaining non-weather operational sentences.
+    decoded['📝 Remarks'] = extractOperationalSentences(normalized);
+
     return decoded;
+}
+
+function tokenizeAtisToTokens(upperText) {
+    return (upperText || '')
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/[.,;:()\[\]{}]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .split(' ')
+        .filter(Boolean);
+}
+
+function parseMetarLikeBits(tokens) {
+    const bits = {
+        wind: '',
+        visibility: '',
+        weather: '',
+        clouds: '',
+        temperature: '',
+        dewpoint: '',
+        altimeter: '',
+        trend: ''
+    };
+
+    if (!Array.isArray(tokens) || tokens.length === 0) return bits;
+
+    // Wind token: 11004KT, VRB03KT, 00000KT
+    for (let i = 0; i < tokens.length; i++) {
+        const t = tokens[i];
+        if (/^(\d{3}|VRB)\d{2,3}(G\d{2,3})?KT$/.test(t)) {
+            bits.wind = decodeAtisWindToken(t);
+            if (tokens[i + 1] && /^\d{3}V\d{3}$/.test(tokens[i + 1])) {
+                const [from, to] = tokens[i + 1].split('V');
+                bits.wind += ` (varying ${from}°–${to}°)`;
+            }
+            break;
+        }
+    }
+
+    // Visibility token: 9999, 4000, 10SM, CAVOK
+    for (const t of tokens) {
+        if (t === 'CAVOK' || t === '9999' || /^\d{4}$/.test(t) || /^\d+SM$/.test(t)) {
+            bits.visibility = stripKnownPrefix(decodeVisibility(t));
+            break;
+        }
+    }
+
+    // Weather phenomena: -RA, SHRA, TSRA, BR, FG, etc. (strict METAR-style tokens only)
+    const wx = [];
+    for (const t of tokens) {
+        if (isMetarWeatherTokenStrict(t)) wx.push(t);
+    }
+    if (wx.length) {
+        bits.weather = stripKnownPrefix(decodeWeather(uniquePreserveOrder(wx)));
+    }
+
+    // Clouds: BKN030, FEW020, SCT050CB, OVC/// etc (keep common)
+    const cloudGroups = [];
+    for (const t of tokens) {
+        if (
+            /^(FEW|SCT|BKN|OVC|VV)\d{3}([A-Z]{2,3})?$/.test(t) ||
+            t === 'CLR' || t === 'SKC' || t === 'NSC' || t === 'NCD' || t === 'CAVOK'
+        ) {
+            cloudGroups.push(t);
+        }
+    }
+    if (cloudGroups.length) {
+        bits.clouds = stripKnownPrefix(decodeClouds(uniquePreserveOrder(cloudGroups)));
+    }
+
+    // Temperature/Dewpoint: 04/00, M05/M10
+    for (const t of tokens) {
+        if (/^M?\d{2}\/M?\d{2}$/.test(t)) {
+            const { temperature, dewpoint } = decodeTempDew(t);
+            bits.temperature = temperature;
+            bits.dewpoint = dewpoint;
+            break;
+        }
+    }
+
+    // QNH / Altimeter: Q1013, A2992, or "QNH 1013"
+    for (let i = 0; i < tokens.length; i++) {
+        const t = tokens[i];
+        if (/^(Q\d{4}|A\d{4})$/.test(t)) {
+            bits.altimeter = stripKnownPrefix(decodeAltimeter(t));
+            break;
+        }
+        if (t === 'QNH' && tokens[i + 1] && /^\d{3,4}$/.test(tokens[i + 1])) {
+            const raw = tokens[i + 1];
+            const hpa = parseInt(raw.length === 3 ? `0${raw}` : raw, 10);
+            bits.altimeter = formatQnh(hpa);
+            break;
+        }
+    }
+
+    // Trend
+    const trends = [];
+    for (const t of tokens) {
+        if (['NOSIG', 'TEMPO', 'BECMG', 'NSW'].includes(t)) trends.push(t);
+    }
+    if (trends.length) {
+        bits.trend = trends.join(' ');
+    }
+
+    return bits;
+}
+
+function isMetarWeatherTokenStrict(token) {
+    if (!token) return false;
+    // Examples: -RA, SHRA, TSRA, FZFG, VCTS, BR, HZ, +SN
+    return /^(\+|-|VC)?(MI|PR|BC|DR|BL|SH|TS|FZ)?(DZ|RA|SN|SG|IC|PL|GR|GS|UP|BR|FG|FU|VA|DU|SA|HZ|PY|PO|SQ|FC|SS|DS)+$/.test(token);
+}
+
+function decodeAtisWindToken(token) {
+    if (token === '00000KT') return 'Wind calm';
+    if (token.startsWith('VRB')) {
+        const m = token.match(/^VRB(\d{2,3})(G\d{2,3})?KT$/);
+        if (!m) return 'Variable wind';
+        const speed = parseInt(m[1], 10);
+        const gust = m[2] ? parseInt(m[2].substring(1), 10) : null;
+        let s = `Variable wind at ${speed} knots`;
+        if (gust != null) s += `, gusting ${gust} knots`;
+        return s;
+    }
+    return decodeWind(token);
+}
+
+function decodeTempDew(tempStr) {
+    const [tRaw, dRaw] = tempStr.split('/');
+    const toC = (v) => (v.startsWith('M') ? -parseInt(v.substring(1), 10) : parseInt(v, 10));
+    const toF = (c) => Math.round((c * 9 / 5) + 32);
+    const tC = toC(tRaw);
+    const dC = toC(dRaw);
+    return {
+        temperature: `${tC}°C (${toF(tC)}°F)`,
+        dewpoint: `${dC}°C (${toF(dC)}°F)`
+    };
+}
+
+function formatQnh(hpa) {
+    if (!Number.isFinite(hpa)) return '';
+    const inHg = (hpa * 0.02953);
+    return `${hpa} hPa (${inHg.toFixed(2)} inHg)`;
+}
+
+function stripKnownPrefix(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/^Visibility:\s*/i, '')
+        .replace(/^Weather:\s*/i, '')
+        .replace(/^Sky condition:\s*/i, '')
+        .replace(/^Altimeter(?:\s*\(QNH\))?:\s*/i, '')
+        .replace(/^Temperature:\s*/i, '')
+        .trim();
+}
+
+function uniquePreserveOrder(arr) {
+    const seen = new Set();
+    const out = [];
+    for (const item of arr) {
+        if (!seen.has(item)) {
+            seen.add(item);
+            out.push(item);
+        }
+    }
+    return out;
+}
+
+function extractRunwaysByContext(upperText, contextRegex) {
+    const runways = [];
+    const re = new RegExp(`\\b${contextRegex.source}\\b[^.]*?\\b(?:RUNWAY|RUNWAYS?|RWY|RWYS?)\\b[^0-9]*((?:\\d{1,2}[LRC]?)(?:\\s*(?:AND|&|,|\\/)\\s*\\d{1,2}[LRC]?)*)(?=\\b|\\.|$)`, 'g');
+    let m;
+    while ((m = re.exec(upperText)) !== null) {
+        const runwayList = m[m.length - 1];
+        runways.push(...splitRunwayList(runwayList));
+    }
+    return uniquePreserveOrder(runways);
+}
+
+function extractAnyRunways(upperText) {
+    const runways = [];
+    const re = /\b(?:RUNWAY|RUNWAYS?|RWY|RWYS?)\b[^0-9]*((?:\d{1,2}[LRC]?)(?:\s*(?:AND|&|,|\/)\s*\d{1,2}[LRC]?)*)(?=\b|\.|$)/g;
+    let m;
+    while ((m = re.exec(upperText)) !== null) {
+        runways.push(...splitRunwayList(m[1]));
+    }
+    return uniquePreserveOrder(runways);
+}
+
+function splitRunwayList(listText) {
+    if (!listText) return [];
+    return listText
+        .split(/\s*(?:AND|&|,|\/)\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((s) => s.padStart(2, '0'));
+}
+
+function buildRunwaySummary(arrival, departure, inUse, any) {
+    const a = (arrival && arrival.length) ? arrival.join(', ') : '';
+    const d = (departure && departure.length) ? departure.join(', ') : '';
+    const u = (inUse && inUse.length) ? inUse.join(', ') : '';
+    const anyRwy = (any && any.length) ? any.join(', ') : '';
+
+    if (a || d) {
+        const parts = [];
+        if (a) parts.push(`Arrival: ${a}`);
+        if (d) parts.push(`Departure: ${d}`);
+        return parts.join(' • ');
+    }
+    if (u) return `In use: ${u}`;
+    if (anyRwy) return anyRwy;
+    return '';
+}
+
+function extractOperationalSentences(text) {
+    if (!text) return '';
+    const sentences = text
+        .split(/\.(?:\s+|$)/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+    const looksWeatherish = (s) => {
+        const u = s.toUpperCase();
+        return (
+            /\b(\d{3}|VRB)\d{2,3}(G\d{2,3})?KT\b/.test(u) ||
+            /\b\d{3}V\d{3}\b/.test(u) ||
+            /\b(CAVOK|9999|\d{4}|\d+SM)\b/.test(u) ||
+            /\b(FEW|SCT|BKN|OVC|VV)\d{3}[A-Z]{0,3}\b/.test(u) ||
+            /\b(M?\d{2}\/M?\d{2})\b/.test(u) ||
+            /\b(Q\d{4}|A\d{4}|QNH\s+\d{3,4})\b/.test(u) ||
+            /\b(NOSIG|TEMPO|BECMG|NSW)\b/.test(u) ||
+            // Only exclude runway sentences that actually specify runway designators (those are decoded separately)
+            /\b(?:RUNWAY|RUNWAYS?|RWY|RWYS?)\b[^.]*\b\d{1,2}[LRC]?\b/.test(u) ||
+            /\bTRANSITION\s+LEVEL\b/.test(u) ||
+            /\bTL\s*\d{1,3}\b/.test(u)
+        );
+    };
+
+    // Treat only a *header-only* opening line as a header (e.g. "MANCHESTER INFORMATION A").
+    // Do not discard operational sentences that mention the word "information".
+    const isHeader = (s) => {
+        if (!s) return false;
+        if (/^TIME\s+\d{4}\s*(?:ZULU|UTC|Z)?\s*$/i.test(s.trim())) return true;
+
+        // Header-only: "<airport name> INFORMATION <letter>" or "<airport name> ATIS <letter>"
+        const natoPhonetic = [
+            'ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'GOLF', 'HOTEL',
+            'INDIA', 'JULIET', 'KILO', 'LIMA', 'MIKE', 'NOVEMBER', 'OSCAR', 'PAPA',
+            'QUEBEC', 'ROMEO', 'SIERRA', 'TANGO', 'UNIFORM', 'VICTOR', 'WHISKEY',
+            'XRAY', 'YANKEE', 'ZULU'
+        ];
+        const headerOnly = new RegExp(`^\\s*[A-Za-z][A-Za-z\\s]{2,}\\s+(?:INFORMATION|ATIS)\\s+(?:[A-Z]|${natoPhonetic.join('|')})\\s*$`, 'i');
+        return headerOnly.test(s);
+    };
+
+    const keep = sentences.filter((s) => !isHeader(s) && !looksWeatherish(s));
+    return keep.join('. ');
 }
 
 // Validate ICAO code format
