@@ -1,5 +1,78 @@
 // METAR Decoder Script
 
+// Fetch METAR data from API
+async function fetchMetar() {
+    const icaoInput = document.getElementById('icao-input');
+    const icaoCode = icaoInput.value.trim().toUpperCase();
+    const resultSection = document.getElementById('result-section');
+    const output = document.getElementById('decoded-output');
+    const fetchBtn = document.getElementById('fetch-btn');
+    
+    // Validate ICAO code
+    if (!icaoCode) {
+        output.innerHTML = '<div class="error">Please enter an ICAO code.</div>';
+        resultSection.style.display = 'block';
+        return;
+    }
+    
+    if (!validateIcaoCode(icaoCode)) {
+        output.innerHTML = '<div class="error">Invalid ICAO code. Please enter a 4-letter airport code (e.g., KJFK, EGLL, KSFO).</div>';
+        resultSection.style.display = 'block';
+        return;
+    }
+    
+    // Show loading state
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = 'Fetching...';
+    output.innerHTML = '<div class="loading">⏳ Fetching METAR data for ' + icaoCode + '...</div>';
+    resultSection.style.display = 'block';
+    
+    try {
+        // Use NOAA Aviation Weather API
+        const url = `https://aviationweather.gov/api/data/metar?ids=${icaoCode}&format=raw`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+        
+        const metarData = await response.text();
+        
+        // Check if METAR data was returned
+        if (!metarData || metarData.trim() === '' || metarData.includes('No METAR found')) {
+            throw new Error(`No METAR data found for airport code ${icaoCode}. Please check the code and try again.`);
+        }
+        
+        // Populate the manual input field with fetched data
+        document.getElementById('metar-input').value = metarData.trim();
+        
+        // Decode the fetched METAR
+        const decoded = parseMetar(metarData.trim());
+        displayResults(decoded, metarData.trim());
+        resultSection.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Error fetching METAR:', error);
+        output.innerHTML = `<div class="error">
+            <strong>Error fetching METAR data:</strong><br>
+            ${error.message}<br><br>
+            <em>Tip: Make sure you entered a valid 4-letter ICAO airport code.</em>
+        </div>`;
+        resultSection.style.display = 'block';
+    } finally {
+        // Reset button state
+        fetchBtn.disabled = false;
+        fetchBtn.textContent = 'Fetch Current METAR';
+    }
+}
+
+// Validate ICAO code format
+function validateIcaoCode(code) {
+    // ICAO codes are exactly 4 letters
+    const icaoPattern = /^[A-Z]{4}$/;
+    return icaoPattern.test(code);
+}
+
 function decodeMetar() {
     const input = document.getElementById('metar-input').value.trim();
     const resultSection = document.getElementById('result-section');
@@ -338,5 +411,18 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             decodeMetar();
         }
+    });
+    
+    // Allow Enter key to fetch METAR from ICAO input
+    document.getElementById('icao-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            fetchMetar();
+        }
+    });
+    
+    // Auto-uppercase ICAO input
+    document.getElementById('icao-input').addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase();
     });
 });

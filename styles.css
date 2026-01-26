@@ -46,6 +46,93 @@ main {
     margin-bottom: 30px;
 }
 
+.icao-section {
+    margin-bottom: 20px;
+}
+
+.icao-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+#icao-input {
+    flex: 1;
+    padding: 15px;
+    font-size: 1em;
+    border: 2px solid #cbd5e0;
+    border-radius: 8px;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    transition: border-color 0.3s;
+}
+
+#icao-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+#fetch-btn {
+    padding: 15px 25px;
+    font-size: 1em;
+    font-weight: bold;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+
+#fetch-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+}
+
+#fetch-btn:active {
+    transform: translateY(0);
+}
+
+#fetch-btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.input-hint {
+    font-size: 0.9em;
+    color: #718096;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+.divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #cbd5e0;
+    z-index: 0;
+}
+
+.divider span {
+    background: white;
+    padding: 0 15px;
+    position: relative;
+    z-index: 1;
+    color: #718096;
+    font-weight: bold;
+}
+
 .input-section label {
     display: block;
     font-size: 1.2em;
@@ -200,6 +287,17 @@ footer {
     margin-bottom: 20px;
 }
 
+.loading {
+    background: #ebf8ff;
+    border-left: 5px solid #4299e1;
+    color: #2c5282;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+
 @media (max-width: 768px) {
     header h1 {
         font-size: 2em;
@@ -211,5 +309,13 @@ footer {
     
     main {
         padding: 20px;
+    }
+    
+    .icao-input-group {
+        flex-direction: column;
+    }
+    
+    #fetch-btn {
+        width: 100%;
     }
 }

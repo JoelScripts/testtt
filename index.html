@@ -14,8 +14,27 @@
         </header>
 
         <main>
+            <div class="input-section icao-section">
+                <label for="icao-input">Enter Airport ICAO Code:</label>
+                <div class="icao-input-group">
+                    <input 
+                        type="text" 
+                        id="icao-input" 
+                        placeholder="e.g., KJFK, EGLL, KSFO"
+                        maxlength="4"
+                        pattern="[A-Za-z]{4}"
+                    />
+                    <button id="fetch-btn" onclick="fetchMetar()">Fetch Current METAR</button>
+                </div>
+                <p class="input-hint">Enter a 4-letter ICAO code to fetch live METAR data</p>
+            </div>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
             <div class="input-section">
-                <label for="metar-input">Enter METAR Code:</label>
+                <label for="metar-input">Enter METAR Code Manually:</label>
                 <textarea 
                     id="metar-input" 
                     placeholder="Example: KJFK 121251Z 24016G28KT 10SM FEW250 23/14 A3012 RMK AO2 SLP201 T02330139"
