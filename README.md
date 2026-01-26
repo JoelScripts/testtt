@@ -9,6 +9,7 @@ Visit the live website: **https://joelscripts.github.io/testtt/**
 ## Features
 
 - **🆕 Automatic METAR Fetching**: Enter any airport ICAO code (e.g., KJFK, EGLL, KSFO) to automatically fetch and decode current weather data
+- **✈️ VATSIM ATIS Decoder**: Fetch and decode live ATIS from VATSIM network airports with active ATC
 - **Input Validation**: Built-in validation ensures only valid 4-letter ICAO codes are submitted
 - **Easy-to-use interface**: Simply paste a METAR code and get instant human-readable translations
 - **Comprehensive decoding**: Decodes all major METAR components including:
@@ -39,10 +40,14 @@ Visit https://joelscripts.github.io/testtt/ to use the decoder immediately.
 3. **Option 2 - Manual Input:**
    - Enter a METAR code in the text area, or click one of the example buttons
    - Click "Decode METAR" to see the human-readable translation
-4. The decoded information will display with clear icons and explanations
+4. **Option 3 - VATSIM ATIS:**
+   - Enter a 4-letter ICAO airport code in the VATSIM ATIS section
+   - Press Enter or click "Fetch & Decode ATIS"
+   - If ATC is active at that airport on VATSIM, the ATIS will be fetched and decoded
+5. The decoded information will display with clear icons and explanations
 
 ### Note on API Access
-The automatic METAR fetching feature uses the NOAA Aviation Weather service. Due to browser CORS restrictions, the API may not be accessible from all locations. If automatic fetching doesn't work, you can still use the manual input method to decode METAR codes.
+The automatic METAR fetching feature uses the NOAA Aviation Weather service. The VATSIM ATIS feature uses the VATSIM network API. Due to browser CORS restrictions, these APIs may not be accessible from all locations. If automatic fetching doesn't work, you can still use the manual input method to decode METAR codes.
 
 ## Example METAR Codes
 
@@ -53,6 +58,10 @@ The automatic METAR fetching feature uses the NOAA Aviation Weather service. Due
 ## What is METAR?
 
 METAR is a standardized format for reporting weather information used in aviation worldwide. It contains coded information about meteorological conditions at airports, including wind, visibility, weather phenomena, clouds, temperature, dewpoint, and atmospheric pressure.
+
+## What is ATIS?
+
+ATIS (Automatic Terminal Information Service) is a continuous broadcast of recorded aeronautical information at airports. It includes essential information such as weather conditions, active runways, and other important notices. On VATSIM (Virtual Air Traffic Simulation Network), controllers provide ATIS broadcasts that pilots can use for flight planning and operations.
 
 ## Files
 

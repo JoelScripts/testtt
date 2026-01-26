@@ -55,6 +55,30 @@
                 <div id="decoded-output"></div>
             </div>
 
+            <div class="divider">
+                <span>ALSO AVAILABLE</span>
+            </div>
+
+            <div class="input-section atis-section">
+                <label for="atis-icao-input">Decode VATSIM ATIS:</label>
+                <div class="icao-input-group">
+                    <input 
+                        type="text" 
+                        id="atis-icao-input" 
+                        placeholder="e.g., KJFK, EGLL, KSFO"
+                        maxlength="4"
+                        pattern="[A-Za-z0-9]{4}"
+                    />
+                    <button id="fetch-atis-btn" onclick="fetchAtis()">Fetch & Decode ATIS</button>
+                </div>
+                <p class="input-hint">Enter an ICAO code to fetch and decode live VATSIM ATIS if available</p>
+            </div>
+
+            <div id="atis-result-section" class="result-section" style="display: none;">
+                <h2>Decoded VATSIM ATIS</h2>
+                <div id="atis-output"></div>
+            </div>
+
             <div class="info-section">
                 <h3>About METAR</h3>
                 <p>

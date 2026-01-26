@@ -120,6 +120,241 @@ async function fetchMetar() {
     }
 }
 
+// Fetch and decode VATSIM ATIS data
+async function fetchAtis() {
+    const atisIcaoInput = document.getElementById('atis-icao-input');
+    const icaoCode = atisIcaoInput.value.trim().toUpperCase();
+    const atisResultSection = document.getElementById('atis-result-section');
+    const atisOutput = document.getElementById('atis-output');
+    const fetchAtisBtn = document.getElementById('fetch-atis-btn');
+    
+    // Validate ICAO code
+    if (!icaoCode) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        errorDiv.textContent = 'Please enter an ICAO code.';
+        atisOutput.innerHTML = '';
+        atisOutput.appendChild(errorDiv);
+        atisResultSection.style.display = 'block';
+        return;
+    }
+    
+    if (!validateIcaoCode(icaoCode)) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        errorDiv.textContent = 'Invalid ICAO code. Please enter a 4-character airport code (e.g., KJFK, EGLL, KSFO).';
+        atisOutput.innerHTML = '';
+        atisOutput.appendChild(errorDiv);
+        atisResultSection.style.display = 'block';
+        return;
+    }
+    
+    // Show loading state
+    fetchAtisBtn.disabled = true;
+    fetchAtisBtn.textContent = 'Fetching...';
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading';
+    loadingDiv.textContent = `⏳ Fetching VATSIM ATIS data for ${icaoCode}...`;
+    atisOutput.innerHTML = '';
+    atisOutput.appendChild(loadingDiv);
+    atisResultSection.style.display = 'block';
+    
+    try {
+        // Encode the ICAO code to prevent URL injection
+        const encodedIcao = encodeURIComponent(icaoCode);
+        
+        // Fetch ATIS data from VATSIM API
+        const url = `https://web.tombnetwork.ca/atis.php?icao=${encodedIcao}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+        
+        const atisData = await response.text();
+        
+        // Check if ATIS data was returned
+        if (!atisData || atisData.trim() === '' || atisData.toLowerCase().includes('no atis') || atisData.toLowerCase().includes('error')) {
+            throw new Error(`No VATSIM ATIS found for ${icaoCode}. This airport may not have active ATC on VATSIM at the moment.`);
+        }
+        
+        // Decode and display the ATIS
+        displayAtisResults(atisData, icaoCode);
+        atisResultSection.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Error fetching ATIS:', error);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        
+        const title = document.createElement('strong');
+        title.textContent = '⚠️ Error fetching VATSIM ATIS:';
+        errorDiv.appendChild(title);
+        errorDiv.appendChild(document.createElement('br'));
+        errorDiv.appendChild(document.createElement('br'));
+        
+        const errorMessage = error.message || 'Failed to fetch ATIS data';
+        errorDiv.appendChild(document.createTextNode(errorMessage));
+        errorDiv.appendChild(document.createElement('br'));
+        errorDiv.appendChild(document.createElement('br'));
+        
+        const tip = document.createElement('em');
+        tip.textContent = 'Note: ATIS is only available when ATC is active at this airport on VATSIM.';
+        errorDiv.appendChild(tip);
+        
+        atisOutput.innerHTML = '';
+        atisOutput.appendChild(errorDiv);
+        atisResultSection.style.display = 'block';
+    } finally {
+        // Reset button state
+        fetchAtisBtn.disabled = false;
+        fetchAtisBtn.textContent = 'Fetch & Decode ATIS';
+    }
+}
+
+// Display decoded ATIS results
+function displayAtisResults(atisText, icaoCode) {
+    const atisOutput = document.getElementById('atis-output');
+    atisOutput.innerHTML = '';
+    
+    // Create container for raw ATIS
+    const rawAtisDiv = document.createElement('div');
+    rawAtisDiv.className = 'raw-metar';
+    rawAtisDiv.textContent = `Raw ATIS: ${atisText}`;
+    atisOutput.appendChild(rawAtisDiv);
+    
+    // Decode ATIS information
+    const decoded = decodeAtis(atisText, icaoCode);
+    
+    // Display each decoded section
+    Object.entries(decoded).forEach(([key, value]) => {
+        if (value) {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'decode-item';
+            
+            const label = document.createElement('strong');
+            label.textContent = key;
+            itemDiv.appendChild(label);
+            
+            const content = document.createElement('p');
+            content.textContent = value;
+            itemDiv.appendChild(content);
+            
+            atisOutput.appendChild(itemDiv);
+        }
+    });
+}
+
+// Decode ATIS text into human-readable format
+function decodeAtis(atisText, icaoCode) {
+    const decoded = {
+        '🏢 Airport': icaoCode,
+        '📻 Information': '',
+        '🕐 Time': '',
+        '🛬 Runway(s)': '',
+        '💨 Wind': '',
+        '👁️ Visibility': '',
+        '🌡️ Temperature': '',
+        '🌡️ Dewpoint': '',
+        '📊 Altimeter/QNH': '',
+        '☁️ Sky Condition': '',
+        '📝 Remarks': ''
+    };
+    
+    // Extract information letter (e.g., "INFORMATION A", "ATIS BRAVO")
+    const infoMatch = atisText.match(/(?:INFORMATION|ATIS)\s+([A-Z]|ALPHA|BRAVO|CHARLIE|DELTA|ECHO|FOXTROT|GOLF|HOTEL|INDIA|JULIET|KILO|LIMA|MIKE|NOVEMBER|OSCAR|PAPA|QUEBEC|ROMEO|SIERRA|TANGO|UNIFORM|VICTOR|WHISKEY|XRAY|YANKEE|ZULU)/i);
+    if (infoMatch) {
+        decoded['📻 Information'] = `Information ${infoMatch[1].toUpperCase()}`;
+    }
+    
+    // Extract time
+    const timeMatch = atisText.match(/(\d{4})\s*(?:ZULU|UTC|Z)/i);
+    if (timeMatch) {
+        const timeStr = timeMatch[1];
+        const hour = timeStr.substring(0, 2);
+        const minute = timeStr.substring(2, 4);
+        decoded['🕐 Time'] = `${hour}:${minute} UTC`;
+    }
+    
+    // Extract runway information
+    const runwayMatch = atisText.match(/(?:RUNWAY|LANDING|DEPARTING|EXPECT|RUNWAYS?)\s+(?:RUNWAY\s+)?([0-9]{1,2}[LRC]?(?:\s+(?:AND|&|,)\s+[0-9]{1,2}[LRC]?)*)/i);
+    if (runwayMatch) {
+        decoded['🛬 Runway(s)'] = `Runway ${runwayMatch[1]}`;
+    }
+    
+    // Extract wind information
+    const windMatch = atisText.match(/WIND\s+(\d{3})(?:\s+(?:AT|DEGREES AT))?\s+(\d{1,3})(?:\s+(?:GUSTING|GUST|G)\s+(\d{1,3}))?\s*(?:KNOTS?|KTS?|KT)/i);
+    if (windMatch) {
+        let windStr = `Wind from ${windMatch[1]}° at ${windMatch[2]} knots`;
+        if (windMatch[3]) {
+            windStr += `, gusting to ${windMatch[3]} knots`;
+        }
+        decoded['💨 Wind'] = windStr;
+    } else if (atisText.match(/WIND\s+CALM/i)) {
+        decoded['💨 Wind'] = 'Wind calm';
+    } else if (atisText.match(/WIND\s+VARIABLE/i)) {
+        const varWindMatch = atisText.match(/VARIABLE\s+(?:AT\s+)?(\d{1,3})\s*(?:KNOTS?|KTS?|KT)/i);
+        if (varWindMatch) {
+            decoded['💨 Wind'] = `Variable wind at ${varWindMatch[1]} knots`;
+        }
+    }
+    
+    // Extract visibility
+    const visMatch = atisText.match(/VISIBILITY\s+(\d+)(?:\s+(?:STATUTE\s+)?MILES?|SM)?/i);
+    if (visMatch) {
+        decoded['👁️ Visibility'] = `${visMatch[1]} statute miles`;
+    } else if (atisText.match(/VISIBILITY\s+(?:ONE\s+ZERO|10)\s*(?:KILOMETERS?|KM)/i)) {
+        decoded['👁️ Visibility'] = '10 kilometers or more';
+    }
+    
+    // Extract temperature
+    const tempMatch = atisText.match(/TEMPERATURE\s+(?:MINUS\s+)?(\d{1,2})/i);
+    if (tempMatch) {
+        const isMinus = atisText.match(/TEMPERATURE\s+MINUS/i);
+        const tempC = isMinus ? -parseInt(tempMatch[1]) : parseInt(tempMatch[1]);
+        const tempF = Math.round((tempC * 9/5) + 32);
+        decoded['🌡️ Temperature'] = `${tempC}°C (${tempF}°F)`;
+    }
+    
+    // Extract dewpoint
+    const dewMatch = atisText.match(/(?:DEWPOINT|DEW\s+POINT)\s+(?:MINUS\s+)?(\d{1,2})/i);
+    if (dewMatch) {
+        const isMinus = atisText.match(/(?:DEWPOINT|DEW\s+POINT)\s+MINUS/i);
+        const dewC = isMinus ? -parseInt(dewMatch[1]) : parseInt(dewMatch[1]);
+        const dewF = Math.round((dewC * 9/5) + 32);
+        decoded['🌡️ Dewpoint'] = `${dewC}°C (${dewF}°F)`;
+    }
+    
+    // Extract altimeter
+    const altMatch = atisText.match(/ALTIMETER\s+(\d{2})\.?(\d{2})/i);
+    if (altMatch) {
+        decoded['📊 Altimeter/QNH'] = `${altMatch[1]}.${altMatch[2]} inches of mercury`;
+    } else {
+        const qnhMatch = atisText.match(/QNH\s+(\d{4})/i);
+        if (qnhMatch) {
+            decoded['📊 Altimeter/QNH'] = `${qnhMatch[1]} hectopascals`;
+        }
+    }
+    
+    // Extract sky condition
+    if (atisText.match(/(?:SKY|CEILING)\s+CLEAR/i) || atisText.match(/\bCLEAR\b/i)) {
+        decoded['☁️ Sky Condition'] = 'Clear skies';
+    } else {
+        const skyMatch = atisText.match(/(?:FEW|SCATTERED|BROKEN|OVERCAST)(?:\s+(?:AT\s+)?(\d+))?/i);
+        if (skyMatch) {
+            decoded['☁️ Sky Condition'] = skyMatch[0];
+        }
+    }
+    
+    // Extract remarks/additional info
+    const remarksMatch = atisText.match(/(?:REMARKS|ADVISE|NOTICE|NOTAM)[\s:]+(.+?)(?=\.|$)/i);
+    if (remarksMatch) {
+        decoded['📝 Remarks'] = remarksMatch[1].trim();
+    }
+    
+    return decoded;
+}
+
 // Validate ICAO code format
 function validateIcaoCode(code) {
     // ICAO codes are exactly 4 alphanumeric characters (letters or numbers)
@@ -481,6 +716,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Auto-uppercase ICAO input
     document.getElementById('icao-input').addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase();
+    });
+    
+    // Allow Enter key to fetch ATIS from ATIS ICAO input
+    document.getElementById('atis-icao-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            fetchAtis();
+        }
+    });
+    
+    // Auto-uppercase ATIS ICAO input
+    document.getElementById('atis-icao-input').addEventListener('input', function(e) {
         e.target.value = e.target.value.toUpperCase();
     });
 });
