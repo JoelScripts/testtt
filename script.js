@@ -1,5 +1,5 @@
 // --- PDF Export for Airport Brief ---
-function exportBriefPDF() {
+window.exportBriefPDF = function exportBriefPDF() {
     // Helper to show error to user
     function showPDFError(msg) {
         alert(msg || 'PDF export failed. Please try again or reload the page.');
@@ -28,23 +28,33 @@ function exportBriefPDF() {
         if (loader) loader.remove();
     }
 
+    // Try loading jsPDF from multiple CDNs
+    function loadJsPDF(fallback) {
+        showPDFLoading();
+        let script = document.createElement('script');
+        script.id = 'jspdf-loader';
+        script.src = fallback ? 'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js' : 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = () => {
+            hidePDFLoading();
+            setTimeout(exportBriefPDF, 100);
+        };
+        script.onerror = () => {
+            if (!fallback) {
+                // Try fallback CDN
+                script.remove();
+                loadJsPDF(true);
+            } else {
+                hidePDFLoading();
+                showPDFError('Failed to load PDF library from all sources. Check your internet connection.');
+            }
+        };
+        document.body.appendChild(script);
+    }
+
     // Load jsPDF if not present
     if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
-        // Prevent multiple loads
         if (!document.getElementById('jspdf-loader')) {
-            showPDFLoading();
-            const script = document.createElement('script');
-            script.id = 'jspdf-loader';
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-            script.onload = () => {
-                hidePDFLoading();
-                setTimeout(exportBriefPDF, 100);
-            };
-            script.onerror = () => {
-                hidePDFLoading();
-                showPDFError('Failed to load PDF library. Check your internet connection.');
-            };
-            document.body.appendChild(script);
+            loadJsPDF(false);
         } else {
             showPDFLoading();
         }
@@ -52,7 +62,10 @@ function exportBriefPDF() {
     }
     hidePDFLoading();
     const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
-    if (!jsPDF) return showPDFError('PDF library not available.');
+    if (!jsPDF) {
+        console.log('jsPDF not available after load.');
+        return showPDFError('PDF library not available.');
+    }
     try {
         const doc = new jsPDF();
 
@@ -1158,3 +1171,47 @@ document.addEventListener('DOMContentLoaded', function() {
         e.target.value = e.target.value.toUpperCase();
     });
 });
+
+// --- Real-world NOTAMs and airport briefing templates ---
+window.fetchNotamsAndBriefing = function fetchNotamsAndBriefing() {
+    const icao = (document.getElementById('notam-icao')?.value || '').trim().toUpperCase();
+    const output = document.getElementById('notam-briefing-output');
+    output.innerHTML = '';
+    if (!icao || icao.length !== 4) {
+        output.textContent = 'Please enter a valid 4-letter ICAO code.';
+        return;
+    }
+    output.textContent = 'Fetching NOTAMs and briefing...';
+    // Example: Use FAA, EAD, or third-party NOTAM API
+    fetch(`https://api.aviationapi.com/v1/notams/${icao}`)
+        .then(r => r.json())
+        .then(data => {
+            let html = `<strong>NOTAMs for ${icao}:</strong><ul>`;
+            if (Array.isArray(data.notams) && data.notams.length) {
+                data.notams.forEach(n => {
+                    html += `<li>${n.text}</li>`;
+                });
+            } else {
+                html += '<li>No NOTAMs found.</li>';
+            }
+            html += '</ul>';
+            html += `<strong>Briefing Sheet:</strong> <em>Airline-style template coming soon.</em>`;
+            output.innerHTML = html;
+        })
+        .catch(() => { output.textContent = 'NOTAM fetch failed.'; });
+};
+
+// --- Smart reminders and checklists ---
+window.showSmartChecklist = function showSmartChecklist() {
+    const output = document.getElementById('smart-checklist-output');
+    output.innerHTML = '';
+    // Example checklist steps
+    const steps = [
+        'Preflight: Check weather, NOTAMs, fuel, route, aircraft status',
+        'Departure: ATIS, clearance, FPL, taxi, takeoff briefing',
+        'Enroute: Monitor systems, position reports, update ETA',
+        'Arrival: ATIS, approach briefing, descent, landing checklist',
+    ];
+    let html = '<ul>' + steps.map(s => `<li>${s}</li>`).join('') + '</ul>';
+    output.innerHTML = html;
+};

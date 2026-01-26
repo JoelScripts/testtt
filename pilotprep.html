@@ -1,3 +1,211 @@
+                <!-- Weather Impact & METAR/TAF Decode card fully removed as requested -->
+                <div class="pilotprep-card">
+                    <div class="pilotprep-section-title">Printable PDF/airline-style paperwork for briefing</div>
+                    <div class="tool-section">
+                        <p>Professional, print-ready briefing sheets for cockpit use.</p>
+                        <button class="primary-btn" type="button" onclick="exportBriefPDF()">Export Briefing PDF</button>
+                    </div>
+                </div>
+
+                <div class="pilotprep-card">
+                    <div class="pilotprep-section-title">Real-world NOTAMs and airport briefing templates</div>
+                    <div class="tool-section">
+                        <p>Auto-fetch NOTAMs and generate a briefing sheet in airline format.</p>
+                        <input id="notam-icao" type="text" maxlength="4" placeholder="Airport ICAO (e.g., EGLL)" />
+                        <button class="primary-btn" type="button" onclick="fetchNotamsAndBriefing()">Generate Briefing Sheet</button>
+                        <div id="notam-briefing-output"></div>
+                    </div>
+                </div>
+
+                <div class="pilotprep-card">
+                    <div class="pilotprep-section-title">Smart reminders and checklists</div>
+                    <div class="tool-section">
+                        <p>Dynamic reminders for step-by-step preflight, departure, enroute, and arrival tasks.</p>
+                        <button class="primary-btn" type="button" onclick="showSmartChecklist()">Show Checklist</button>
+                        <div id="smart-checklist-output"></div>
+                    </div>
+                </div>
+</main>
+<script>
+window.exportBriefPDF = function exportBriefPDF() {
+    function showPDFError(msg) {
+        alert(msg || 'PDF export failed. Please try again or reload the page.');
+    }
+    function showPDFLoading() {
+        let loader = document.getElementById('pdf-loader-indicator');
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'pdf-loader-indicator';
+            loader.textContent = 'Loading PDF library...';
+            loader.style.position = 'fixed';
+            loader.style.top = '16px';
+            loader.style.right = '16px';
+            loader.style.background = '#764ba2';
+            loader.style.color = '#fff';
+            loader.style.padding = '8px 16px';
+            loader.style.borderRadius = '8px';
+            loader.style.zIndex = '9999';
+            loader.style.fontWeight = 'bold';
+            document.body.appendChild(loader);
+        }
+    }
+    function hidePDFLoading() {
+        const loader = document.getElementById('pdf-loader-indicator');
+        if (loader) loader.remove();
+    }
+    function loadJsPDF(fallback) {
+        showPDFLoading();
+        let script = document.createElement('script');
+        script.id = 'jspdf-loader';
+        script.src = fallback ? 'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js' : 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        script.onload = () => {
+            hidePDFLoading();
+            setTimeout(window.exportBriefPDF, 100);
+        };
+        script.onerror = () => {
+            if (!fallback) {
+                script.remove();
+                loadJsPDF(true);
+            } else {
+                hidePDFLoading();
+                showPDFError('Failed to load PDF library from all sources. Check your internet connection.');
+            }
+        };
+        document.body.appendChild(script);
+    }
+    if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+        if (!document.getElementById('jspdf-loader')) {
+            loadJsPDF(false);
+        } else {
+            showPDFLoading();
+        }
+        return;
+    }
+    hidePDFLoading();
+    const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
+    if (!jsPDF) {
+        console.log('jsPDF not available after load.');
+        return showPDFError('PDF library not available.');
+    }
+    try {
+        const doc = new jsPDF();
+        // --- Professional airline-style PDF layout ---
+        let y = 20;
+        // Callsign-based logo
+        const callsign = (document.getElementById('pp-callsign')?.value || 'VIRTUAL').toUpperCase();
+        const logoText = callsign.replace(/[^A-Z]/g, '').slice(0, 3) || 'VA';
+        doc.setDrawColor(60,60,60);
+        doc.setLineWidth(0.7);
+        doc.setFillColor(240,240,240);
+        doc.rect(20, y, 32, 16, 'FD');
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.text(logoText, 36, y+11, {align:'center'});
+        y += 4;
+        // Title
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PILOT BRIEFING SHEET', 105, y+12, { align: 'center' });
+        y += 18;
+        // Flight Info Table
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.line(20, y, 190, y);
+        y += 7;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Flight:', 22, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text((document.getElementById('pp-callsign')?.value || '________'), 42, y);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Date:', 120, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(new Date().toLocaleDateString(), 140, y);
+        y += 7;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Departure:', 22, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text((document.getElementById('pp-dep')?.value || '____'), 50, y);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Arrival:', 120, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text((document.getElementById('pp-arr')?.value || '____'), 140, y);
+        y += 7;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Aircraft:', 22, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text((document.getElementById('pp-aircraft')?.value || '____'), 50, y);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Cruise Level:', 120, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text((document.getElementById('pp-cruise')?.value || '____'), 155, y);
+        y += 7;
+        doc.line(20, y, 190, y);
+        y += 10;
+        // ROUTE Section
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('ROUTE', 22, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        y += 3;
+        const route = (document.getElementById('pp-route')?.value || '').trim();
+        doc.setDrawColor(120,120,120);
+        doc.setLineWidth(0.3);
+        doc.rect(22, y, 166, 14);
+        doc.text(doc.splitTextToSize(route || 'N/A', 162), 24, y+9);
+        y += 18;
+        // WEATHER Section
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('WEATHER', 22, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        y += 3;
+        doc.rect(22, y, 166, 14);
+        doc.text('Refer to METAR/TAF for latest conditions.', 24, y+9);
+        y += 18;
+        // TAXI / HOTSPOTS Section
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('TAXI / HOTSPOTS', 22, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        y += 3;
+        doc.rect(22, y, 166, 14);
+        doc.text('See airport chart for taxi routing and hotspots.', 24, y+9);
+        y += 18;
+        // BRIEFING NOTES Section
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('BRIEFING NOTES', 22, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        y += 3;
+        const notes = (document.getElementById('pp-brief')?.value || '').trim();
+        doc.rect(22, y, 166, 40);
+        doc.text(doc.splitTextToSize(notes || 'No notes provided.', 162), 24, y+7);
+        y += 44;
+        // CONTINGENCIES Section
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('CONTINGENCIES', 22, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        y += 3;
+        doc.rect(22, y, 166, 14);
+        doc.text('Go-around, alternate, missed approach:', 24, y+9);
+        y += 20;
+        // Footer
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'italic');
+        doc.text('Generated by VATSIM Pilot Prep | For simulation use only', 105, 285, { align: 'center' });
+        doc.save('Pilot_Briefing.pdf');
+    } catch (err) {
+        showPDFError('PDF export failed: ' + (err?.message || err));
+    }
+}
+</script>
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -187,6 +395,6 @@
         </footer>
     </div>
 
-    <script src="pilotprep.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
