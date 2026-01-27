@@ -716,19 +716,24 @@ function parseMetar(metar) {
     };
     
     let i = 0;
-    
+
     // Station identifier (4 letters)
     if (parts[i] && parts[i].match(/^[A-Z]{4}$/)) {
         decoded.station = decodeStation(parts[i]);
         i++;
     }
-    
+
+    // Optional AUTO or COR
+    if (parts[i] && (parts[i] === 'AUTO' || parts[i] === 'COR')) {
+        i++;
+    }
+
     // Date and time
     if (parts[i] && parts[i].match(/^\d{6}Z$/)) {
         decoded.time = decodeTime(parts[i]);
         i++;
     }
-    
+
     // Wind
     if (parts[i] && parts[i].match(/^\d{3}\d{2,3}(G\d{2,3})?(KT|MPS|KMH)$/)) {
         decoded.wind = decodeWind(parts[i]);
@@ -744,31 +749,21 @@ function parseMetar(metar) {
             i += 2;
         }
     }
-    
+
     // Variable wind direction
     if (parts[i] && parts[i].match(/^\d{3}V\d{3}$/)) {
         const [from, to] = parts[i].split('V');
         decoded.wind += ` (varying between ${from}° and ${to}°)`;
         i++;
     }
-    
+
     // Visibility
     if (parts[i] && (parts[i].match(/^\d{4}$/) || parts[i].match(/^\d+SM$/) || parts[i] === 'CAVOK' || parts[i] === '9999')) {
         decoded.visibility = decodeVisibility(parts[i]);
         i++;
     }
-    
-    // Weather phenomena
-    const weatherCodes = [];
-    while (parts[i] && isWeatherPhenomenon(parts[i])) {
-        weatherCodes.push(parts[i]);
-        i++;
-    }
-    if (weatherCodes.length > 0) {
-        decoded.weather = decodeWeather(weatherCodes);
-    }
-    
-    // Cloud coverage
+
+    // Cloud coverage (may come before weather in some reports)
     const cloudGroups = [];
     while (parts[i] && (parts[i].match(/^(FEW|SCT|BKN|OVC|VV)\d{3}/) || parts[i] === 'CLR' || parts[i] === 'SKC' || parts[i] === 'NSC' || parts[i] === 'CAVOK')) {
         cloudGroups.push(parts[i]);
@@ -777,22 +772,50 @@ function parseMetar(metar) {
     if (cloudGroups.length > 0) {
         decoded.clouds = decodeClouds(cloudGroups);
     }
-    
+
+    // Weather phenomena (may be after clouds in some reports)
+    const weatherCodes = [];
+    while (parts[i] && isWeatherPhenomenon(parts[i])) {
+        weatherCodes.push(parts[i]);
+        i++;
+    }
+    if (weatherCodes.length > 0) {
+        decoded.weather = decodeWeather(weatherCodes);
+    }
+
     // Temperature and dewpoint
     if (parts[i] && parts[i].match(/^M?\d{2}\/M?\d{2}$/)) {
         decoded.temperature = decodeTemperature(parts[i]);
         i++;
     }
-    
-    // Altimeter
+
+    // Altimeter (QNH or A)
     if (parts[i] && (parts[i].match(/^A\d{4}$/) || parts[i].match(/^Q\d{4}$/))) {
         decoded.altimeter = decodeAltimeter(parts[i]);
         i++;
     }
-    
-    // Remarks
-    if (parts[i] && parts[i] === 'RMK') {
-        decoded.remarks = 'Additional remarks: ' + parts.slice(i + 1).join(' ');
+
+    // Handle trend/remarks (TEMPO, BECMG, RMK, etc.)
+    let remarks = [];
+    while (parts[i]) {
+        if (parts[i] === 'RMK') {
+            remarks.push('Additional remarks: ' + parts.slice(i + 1).join(' '));
+            break;
+        } else if (['TEMPO', 'BECMG', 'INTER', 'PROB30', 'PROB40'].includes(parts[i])) {
+            let trend = parts[i];
+            let trendDetails = [];
+            i++;
+            while (parts[i] && !['TEMPO', 'BECMG', 'INTER', 'PROB30', 'PROB40', 'RMK'].includes(parts[i])) {
+                trendDetails.push(parts[i]);
+                i++;
+            }
+            remarks.push(`${trend}: ${trendDetails.join(' ')}`);
+        } else {
+            i++;
+        }
+    }
+    if (remarks.length > 0) {
+        decoded.remarks = remarks.join(' | ');
     }
 
     // Set any missing fields to 'Not reported' for display
