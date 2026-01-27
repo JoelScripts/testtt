@@ -710,7 +710,7 @@ function parseMetar(metar) {
         weather: '',
         clouds: '',
         temperature: '',
-        dewpoint: '',
+        dewpoint: '', // not used separately, but kept for compatibility
         altimeter: '',
         remarks: ''
     };
@@ -794,7 +794,13 @@ function parseMetar(metar) {
     if (parts[i] && parts[i] === 'RMK') {
         decoded.remarks = 'Additional remarks: ' + parts.slice(i + 1).join(' ');
     }
-    
+
+    // Set any missing fields to 'Not reported' for display
+    Object.keys(decoded).forEach(key => {
+        if (key !== 'raw' && decoded[key] === '') {
+            decoded[key] = 'Not reported';
+        }
+    });
     return decoded;
 }
 
@@ -982,7 +988,7 @@ function displayResults(decoded, rawMetar) {
             <div class="raw-metar">${rawMetar}</div>
         </details>
     `;
-    
+
     const items = [
         { label: '📍 Station', value: decoded.station },
         { label: '🕐 Time', value: decoded.time },
@@ -994,20 +1000,18 @@ function displayResults(decoded, rawMetar) {
         { label: '📊 Altimeter', value: decoded.altimeter },
         { label: '📝 Remarks', value: decoded.remarks }
     ];
-    
+
     html += `<div class="decode-grid">`;
     items.forEach(item => {
-        if (item.value) {
-            html += `
-                <div class="decode-item">
-                    <strong>${item.label}</strong>
-                    <p>${item.value}</p>
-                </div>
-            `;
-        }
+        html += `
+            <div class="decode-item">
+                <strong>${item.label}</strong>
+                <p>${item.value}</p>
+            </div>
+        `;
     });
     html += `</div>`;
-    
+
     output.innerHTML = html;
 }
 

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Route Generator (SimBrief AIRAC 2601)</h1>
+    <form id="routeForm">
+        <label for="origin">Origin ICAO:</label>
+        <input type="text" id="origin" name="origin" maxlength="4" required>
+        <br>
+        <label for="destination">Destination ICAO:</label>
+        <input type="text" id="destination" name="destination" maxlength="4" required>
+        <br>
+        <button type="submit">Generate Route</button>
+    </form>
+    <div id="routeResult"></div>
+    <script src="routegen.js"></script>
+</body>
+</html>
