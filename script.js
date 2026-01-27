@@ -734,75 +734,40 @@ function parseMetar(metar) {
         i++;
     }
 
-    // Wind
-    if (parts[i] && parts[i].match(/^\d{3}\d{2,3}(G\d{2,3})?(KT|MPS|KMH)$/)) {
-        decoded.wind = decodeWind(parts[i]);
-        i++;
-    } else if (parts[i] && parts[i] === 'VRB') {
-        if (parts[i+1] && parts[i+1].match(/^\d{2,3}(KT|MPS|KMH)$/)) {
+    // Now parse the rest in any order
+    let cloudGroups = [];
+    let weatherCodes = [];
+    let remarks = [];
+    while (i < parts.length) {
+        const part = parts[i];
+        if (part.match(/^\d{3}\d{2,3}(G\d{2,3})?(KT|MPS|KMH)$/)) {
+            decoded.wind = decodeWind(part);
+        } else if (part === 'VRB' && parts[i+1] && parts[i+1].match(/^\d{2,3}(KT|MPS|KMH)$/)) {
             const unitMatch = parts[i+1].match(/(KT|MPS|KMH)$/);
             const unit = unitMatch ? unitMatch[1] : 'KT';
             let unitText = 'knots';
             if (unit === 'MPS') unitText = 'meters per second';
             if (unit === 'KMH') unitText = 'kilometers per hour';
             decoded.wind = 'Variable wind at ' + parts[i+1].replace(/[A-Z]+$/, '') + ' ' + unitText;
-            i += 2;
-        }
-    }
-
-    // Variable wind direction
-    if (parts[i] && parts[i].match(/^\d{3}V\d{3}$/)) {
-        const [from, to] = parts[i].split('V');
-        decoded.wind += ` (varying between ${from}° and ${to}°)`;
-        i++;
-    }
-
-    // Visibility
-    if (parts[i] && (parts[i].match(/^\d{4}$/) || parts[i].match(/^\d+SM$/) || parts[i] === 'CAVOK' || parts[i] === '9999')) {
-        decoded.visibility = decodeVisibility(parts[i]);
-        i++;
-    }
-
-    // Cloud coverage (may come before weather in some reports)
-    const cloudGroups = [];
-    while (parts[i] && (parts[i].match(/^(FEW|SCT|BKN|OVC|VV)\d{3}/) || parts[i] === 'CLR' || parts[i] === 'SKC' || parts[i] === 'NSC' || parts[i] === 'CAVOK')) {
-        cloudGroups.push(parts[i]);
-        i++;
-    }
-    if (cloudGroups.length > 0) {
-        decoded.clouds = decodeClouds(cloudGroups);
-    }
-
-    // Weather phenomena (may be after clouds in some reports)
-    const weatherCodes = [];
-    while (parts[i] && isWeatherPhenomenon(parts[i])) {
-        weatherCodes.push(parts[i]);
-        i++;
-    }
-    if (weatherCodes.length > 0) {
-        decoded.weather = decodeWeather(weatherCodes);
-    }
-
-    // Temperature and dewpoint
-    if (parts[i] && parts[i].match(/^M?\d{2}\/M?\d{2}$/)) {
-        decoded.temperature = decodeTemperature(parts[i]);
-        i++;
-    }
-
-    // Altimeter (QNH or A)
-    if (parts[i] && (parts[i].match(/^A\d{4}$/) || parts[i].match(/^Q\d{4}$/))) {
-        decoded.altimeter = decodeAltimeter(parts[i]);
-        i++;
-    }
-
-    // Handle trend/remarks (TEMPO, BECMG, RMK, etc.)
-    let remarks = [];
-    while (parts[i]) {
-        if (parts[i] === 'RMK') {
+            i++;
+        } else if (part.match(/^\d{3}V\d{3}$/)) {
+            const [from, to] = part.split('V');
+            decoded.wind += ` (varying between ${from}° and ${to}°)`;
+        } else if (part.match(/^\d{4}$/) || part.match(/^\d+SM$/) || part === 'CAVOK' || part === '9999') {
+            decoded.visibility = decodeVisibility(part);
+        } else if (part.match(/^(FEW|SCT|BKN|OVC|VV)\d{3}/) || part === 'CLR' || part === 'SKC' || part === 'NSC' || part === 'CAVOK') {
+            cloudGroups.push(part);
+        } else if (isWeatherPhenomenon(part)) {
+            weatherCodes.push(part);
+        } else if (part.match(/^M?\d{2}\/M?\d{2}$/)) {
+            decoded.temperature = decodeTemperature(part);
+        } else if (part.match(/^A\d{4}$/) || part.match(/^Q\d{4}$/)) {
+            decoded.altimeter = decodeAltimeter(part);
+        } else if (part === 'RMK') {
             remarks.push('Additional remarks: ' + parts.slice(i + 1).join(' '));
             break;
-        } else if (['TEMPO', 'BECMG', 'INTER', 'PROB30', 'PROB40'].includes(parts[i])) {
-            let trend = parts[i];
+        } else if (['TEMPO', 'BECMG', 'INTER', 'PROB30', 'PROB40'].includes(part)) {
+            let trend = part;
             let trendDetails = [];
             i++;
             while (parts[i] && !['TEMPO', 'BECMG', 'INTER', 'PROB30', 'PROB40', 'RMK'].includes(parts[i])) {
@@ -810,14 +775,21 @@ function parseMetar(metar) {
                 i++;
             }
             remarks.push(`${trend}: ${trendDetails.join(' ')}`);
-        } else {
-            i++;
+            continue;
+        } else if (part === 'NOSIG') {
+            remarks.push('No significant change expected');
         }
+        i++;
+    }
+    if (cloudGroups.length > 0) {
+        decoded.clouds = decodeClouds(cloudGroups);
+    }
+    if (weatherCodes.length > 0) {
+        decoded.weather = decodeWeather(weatherCodes);
     }
     if (remarks.length > 0) {
         decoded.remarks = remarks.join(' | ');
     }
-
     // Set any missing fields to 'Not reported' for display
     Object.keys(decoded).forEach(key => {
         if (key !== 'raw' && decoded[key] === '') {
