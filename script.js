@@ -723,8 +723,8 @@ function parseMetar(metar) {
         i++;
     }
 
-    // Optional AUTO or COR
-    if (parts[i] && (parts[i] === 'AUTO' || parts[i] === 'COR')) {
+    // Skip any number of optional tokens (AUTO, COR, SPECI, NIL)
+    while (parts[i] && (parts[i] === 'AUTO' || parts[i] === 'COR' || parts[i] === 'SPECI' || parts[i] === 'NIL')) {
         i++;
     }
 
