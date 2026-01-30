@@ -47,91 +47,300 @@
                     <button id="fetch-btn" onclick="fetchMetar()">Fetch Current METAR</button>
                 </div>
                 <p class="input-hint">Enter a 4-letter ICAO code to fetch live METAR data</p>
-            </div>
-
-            <div class="divider">
-                <span>OR</span>
-            </div>
-
-            <div class="input-section">
-                <label for="metar-input">Enter METAR Code Manually:</label>
-                <textarea 
-                    id="metar-input" 
-                    placeholder="Example: KJFK 121251Z 24016G28KT 10SM FEW250 23/14 A3012 RMK AO2 SLP201 T02330139"
-                    rows="3"
-                ></textarea>
-                <button id="decode-btn" onclick="decodeMetar()">Decode METAR</button>
-            </div>
-
-            <div class="examples">
-
-                            <div class="pilotprep-card">
-                                <div class="pilotprep-section-title" style="display:flex;align-items:center;gap:10px;">
-                                    <span style="font-size:1.5em;color:#7c3aed;">🛬</span>
-                                    Runway Landing Suggestion
-                                </div>
-                                <div class="tool-section" style="background:#f7f6fd;padding:18px 14px 18px 14px;border-radius:12px;box-shadow:0 1px 4px rgba(124,58,237,0.06);">
-                                    <p style="margin-bottom:12px;font-size:1.08em;color:#5a4b81;">Suggests the best runway for landing based on current winds and weather.</p>
-                                    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
-                                        <input id="runway-icao" type="text" maxlength="4" placeholder="Airport ICAO (e.g., EGLL)" style="flex:1;max-width:220px;" />
-                                        <button class="primary-btn" type="button" onclick="suggestLandingRunway()">Suggest Runway</button>
-                                    </div>
-                                    <div id="runway-suggestion-output" style="margin-top:10px;padding:12px 14px;background:#fff;border-radius:8px;min-height:38px;box-shadow:0 1px 2px rgba(124,58,237,0.04);"></div>
-                                </div>
-                            </div>
-                <p><strong>Quick Examples:</strong></p>
-                <button class="example-btn" onclick="loadExample('KJFK 121251Z 24016G28KT 10SM FEW250 23/14 A3012')">JFK Airport</button>
-                <button class="example-btn" onclick="loadExample('EGLL 121250Z 27015KT 9999 FEW035 17/12 Q1013')">London Heathrow</button>
-                <button class="example-btn" onclick="loadExample('KSFO 121256Z 29008KT 10SM CLR 18/12 A2990')">San Francisco</button>
-            </div>
-
-            <div id="result-section" class="result-section" style="display: none;">
-                <h2>Decoded Weather Report</h2>
-                <div id="decoded-output"></div>
-            </div>
-
-            <div class="divider">
-                <span>ALSO AVAILABLE</span>
-            </div>
-
-            <div class="input-section atis-section">
-                <label for="atis-icao-input">Decode VATSIM ATIS:</label>
-                <div class="icao-input-group">
-                    <input 
-                        type="text" 
-                        id="atis-icao-input" 
-                        placeholder="e.g., KJFK, EGLL, KSFO"
-                        maxlength="4"
-                        pattern="[A-Za-z0-9]{4}"
-                    />
-                    <button id="fetch-atis-btn" onclick="fetchAtis()">Fetch & Decode ATIS</button>
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>METAR Decoder - Aviation Weather Made Easy</title>
+                <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🛩️</text></svg>">
+                <style>
+                    body {
+                        min-height: 100vh;
+                        margin: 0;
+                        padding: 0;
+                        font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+                        background: linear-gradient(120deg, #a18cd1 0%, #fbc2eb 100%);
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .glass-card {
+                        background: rgba(255,255,255,0.75);
+                        box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+                        backdrop-filter: blur(12px);
+                        -webkit-backdrop-filter: blur(12px);
+                        border-radius: 24px;
+                        padding: 44px 38px 32px 38px;
+                        max-width: 420px;
+                        width: 100%;
+                        margin: 48px 0 24px 0;
+                    }
+                    .logo {
+                        font-size: 2.6em;
+                        text-align: center;
+                        margin-bottom: 8px;
+                    }
+                    .title {
+                        font-size: 2em;
+                        font-weight: 700;
+                        color: #5a4b81;
+                        text-align: center;
+                        margin-bottom: 8px;
+                        letter-spacing: -0.01em;
+                    }
+                    .subtitle {
+                        color: #7c3aed;
+                        font-size: 1.1em;
+                        text-align: center;
+                        margin-bottom: 28px;
+                    }
+                    .input-block {
+                        margin-bottom: 22px;
+                    }
+                    .input-label {
+                        font-weight: 600;
+                        color: #7c3aed;
+                        margin-bottom: 8px;
+                        display: block;
+                        font-size: 1.08em;
+                    }
+                    .input-row {
+                        display: flex;
+                        gap: 10px;
+                    }
+                    .input-row input, .input-row textarea {
+                        flex: 1;
+                        padding: 16px 16px;
+                        border: none;
+                        border-radius: 12px;
+                        font-size: 1.12em;
+                        background: rgba(245,245,255,0.85);
+                        box-shadow: 0 1px 4px rgba(124,58,237,0.06);
+                        outline: none;
+                        transition: box-shadow 0.2s;
+                    }
+                    .input-row input:focus, .input-row textarea:focus {
+                        box-shadow: 0 0 0 2px #a18cd1;
+                    }
+                    .input-row button {
+                        background: linear-gradient(90deg, #a18cd1 0%, #7c3aed 100%);
+                        color: #fff;
+                        border: none;
+                        border-radius: 12px;
+                        padding: 0 26px;
+                        font-size: 1.12em;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                        box-shadow: 0 1px 4px rgba(124,58,237,0.10);
+                    }
+                    .input-row button:hover {
+                        background: linear-gradient(90deg, #7c3aed 0%, #a18cd1 100%);
+                    }
+                    .examples {
+                        text-align: center;
+                        margin-bottom: 18px;
+                    }
+                    .example-btn {
+                        background: #ede9fe;
+                        color: #7c3aed;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 8px 18px;
+                        font-size: 1em;
+                        margin: 0 6px 8px 0;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                    }
+                    .example-btn:hover {
+                        background: #d1c4e9;
+                    }
+                    .result-section {
+                        margin-top: 18px;
+                    }
+                    .decode-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 16px;
+                        margin-top: 18px;
+                    }
+                    .decode-item {
+                        background: rgba(255,255,255,0.92);
+                        border-radius: 12px;
+                        box-shadow: 0 1px 2px rgba(124,58,237,0.04);
+                        padding: 14px 16px;
+                    }
+                    .decode-item strong {
+                        color: #7c3aed;
+                        font-size: 1.08em;
+                    }
+                    .info-section {
+                        margin-top: 32px;
+                        color: #6b7280;
+                        font-size: 1.08em;
+                        text-align: center;
+                    }
+                    .nav-links {
+                        display: flex;
+                        justify-content: center;
+                        gap: 1.5em;
+                        margin-bottom: 18px;
+                    }
+                    .nav-links a {
+                        color: #7c3aed;
+                        text-decoration: none;
+                        font-weight: 600;
+                        font-size: 1.08em;
+                        transition: color 0.2s;
+                    }
+                    .nav-links a:hover {
+                        color: #5a4b81;
+                    }
+                    footer {
+                        margin-top: 18px;
+                        color: #a1a1aa;
+                        font-size: 0.98em;
+                        text-align: center;
+                    }
+                    @media (max-width: 600px) {
+                        .glass-card {
+                            padding: 18px 4vw 18px 4vw;
+                        }
+                        .decode-grid {
+                            grid-template-columns: 1fr;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="glass-card">
+                    <div class="logo">🛩️</div>
+                    <div class="title">METAR Decoder</div>
+                    <div class="subtitle">Aviation weather, decoded simply and beautifully</div>
+                    <div class="nav-links">
+                        <a href="index.html">Home</a>
+                        <a href="notams.html">NOTAMs</a>
+                        <a href="routecheck.html">Route Checker</a>
+                        <a href="pilotprep.html">Pilot Prep</a>
+                        <a href="runway_suggest.html">Runway Suggestion</a>
+                    </div>
+                    <div class="input-block">
+                        <label class="input-label" for="icao-input">Airport ICAO Code</label>
+                        <div class="input-row">
+                            <input type="text" id="icao-input" placeholder="e.g., KJFK, EGLL, KSFO" maxlength="4" pattern="[A-Za-z0-9]{4}" />
+                            <button id="fetch-btn" onclick="fetchMetar()">Fetch METAR</button>
+                        </div>
+                    </div>
+                    <div class="input-block">
+                        <label class="input-label" for="metar-input">Paste METAR Code</label>
+                        <div class="input-row">
+                            <textarea id="metar-input" placeholder="KJFK 121251Z 24016G28KT 10SM FEW250 23/14 A3012 RMK AO2 SLP201 T02330139" rows="2"></textarea>
+                            <button id="decode-btn" onclick="decodeMetar()">Decode</button>
+                        </div>
+                    </div>
+                    <div class="examples">
+                        <button class="example-btn" onclick="loadExample('KJFK 121251Z 24016G28KT 10SM FEW250 23/14 A3012')">JFK</button>
+                        <button class="example-btn" onclick="loadExample('EGLL 121250Z 27015KT 9999 FEW035 17/12 Q1013')">Heathrow</button>
+                        <button class="example-btn" onclick="loadExample('KSFO 121256Z 29008KT 10SM CLR 18/12 A2990')">SFO</button>
+                    </div>
+                    <div id="result-section" class="result-section" style="display: none;">
+                        <h2 style="text-align:center;">Decoded Weather Report</h2>
+                        <div id="decoded-output"></div>
+                    </div>
+                    <div class="info-section">
+                        <h3>About METAR</h3>
+                        <p>
+                            METAR is a format for reporting weather information used in aviation.<br>
+                            This tool translates these codes into easy-to-understand language.
+                        </p>
+                    </div>
+                    <footer>
+                        <p>© 2026 METAR Decoder | For educational purposes</p>
+                    </footer>
                 </div>
-                <p class="input-hint">Enter an ICAO code to fetch and decode live VATSIM ATIS if available</p>
-            </div>
+                <script src="script.js"></script>
+            </body>
+            </html>
+            </head>
+            <body>
+                <nav class="main-nav">
+                    <a href="index.html">METAR Decoder</a>
+                    <a href="notams.html">NOTAMs</a>
+                    <a href="routecheck.html">Route Checker</a>
+                    <a href="pilotprep.html">Pilot Prep</a>
+                    <a href="runway_suggest.html">Runway Suggestion</a>
+                </nav>
+                <div class="container">
+                    <div class="header-row">
+                        <span class="header-icon">✈️</span>
+                        <span class="header-title">METAR Decoder</span>
+                    </div>
+                    <div class="subtitle">Decode aviation weather reports into plain English</div>
 
-            <div id="atis-result-section" class="result-section" style="display: none;">
-                <h2>Decoded VATSIM ATIS</h2>
-                <div id="atis-output"></div>
-            </div>
+                    <div class="card">
+                        <label class="input-label" for="icao-input">Enter Airport ICAO Code:</label>
+                        <div class="input-group">
+                            <input type="text" id="icao-input" placeholder="e.g., KJFK, EGLL, KSFO" maxlength="4" pattern="[A-Za-z0-9]{4}" />
+                            <button id="fetch-btn" onclick="fetchMetar()">Fetch Current METAR</button>
+                        </div>
+                        <div class="input-hint">Enter a 4-letter ICAO code to fetch live METAR data</div>
+                    </div>
 
-            <div class="info-section">
-                <h3>About METAR</h3>
-                <p>
-                    METAR is a format for reporting weather information used in aviation. 
-                    It contains coded information about wind, visibility, weather phenomena, 
-                    clouds, temperature, dewpoint, and atmospheric pressure.
-                </p>
-                <p>
-                    This decoder helps translate these codes into easy-to-understand language.
-                </p>
-            </div>
-        </main>
+                    <div class="divider">OR</div>
 
-        <footer>
-            <p>© 2026 METAR Decoder | For educational purposes</p>
-        </footer>
-    </div>
+                    <div class="card">
+                        <label class="input-label" for="metar-input">Enter METAR Code Manually:</label>
+                        <div class="input-group">
+                            <textarea id="metar-input" placeholder="Example: KJFK 121251Z 24016G28KT 10SM FEW250 23/14 A3012 RMK AO2 SLP201 T02330139" rows="3"></textarea>
+                            <button id="decode-btn" onclick="decodeMetar()">Decode METAR</button>
+                        </div>
+                    </div>
 
-    <script src="script.js"></script>
-</body>
-</html>
+                    <div class="examples">
+                        <strong>Quick Examples:</strong><br>
+                        <button class="example-btn" onclick="loadExample('KJFK 121251Z 24016G28KT 10SM FEW250 23/14 A3012')">JFK Airport</button>
+                        <button class="example-btn" onclick="loadExample('EGLL 121250Z 27015KT 9999 FEW035 17/12 Q1013')">London Heathrow</button>
+                        <button class="example-btn" onclick="loadExample('KSFO 121256Z 29008KT 10SM CLR 18/12 A2990')">San Francisco</button>
+                    </div>
+
+                    <div id="result-section" class="result-section" style="display: none;">
+                        <h2>Decoded Weather Report</h2>
+                        <div id="decoded-output"></div>
+                    </div>
+
+                    <div class="divider">ALSO AVAILABLE</div>
+
+                    <div class="card">
+                        <label class="input-label" for="atis-icao-input">Decode VATSIM ATIS:</label>
+                        <div class="input-group">
+                            <input type="text" id="atis-icao-input" placeholder="e.g., KJFK, EGLL, KSFO" maxlength="4" pattern="[A-Za-z0-9]{4}" />
+                            <button id="fetch-atis-btn" onclick="fetchAtis()">Fetch & Decode ATIS</button>
+                        </div>
+                        <div class="input-hint">Enter an ICAO code to fetch and decode live VATSIM ATIS if available</div>
+                    </div>
+
+                    <div id="atis-result-section" class="result-section" style="display: none;">
+                        <h2>Decoded VATSIM ATIS</h2>
+                        <div id="atis-output"></div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>About METAR</h3>
+                        <p>
+                            METAR is a format for reporting weather information used in aviation. 
+                            It contains coded information about wind, visibility, weather phenomena, 
+                            clouds, temperature, dewpoint, and atmospheric pressure.
+                        </p>
+                        <p>
+                            This decoder helps translate these codes into easy-to-understand language.
+                        </p>
+                    </div>
+                    <footer>
+                        <p>© 2026 METAR Decoder | For educational purposes</p>
+                    </footer>
+                </div>
+                <script src="script.js"></script>
+            </body>
+            </html>
